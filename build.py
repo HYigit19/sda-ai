@@ -190,7 +190,7 @@ SERVICES = [
 # The order here is the order on the site.
 import importlib.util as _ilu
 DEMO_DIR = ROOT / "src" / "demos"
-DEMO_ORDER = ["workflow-management", "field-service", "hr-tool", "real-estate", "dashboard", "vendor-management", "facility-management"]
+DEMO_ORDER = ["workflow-management", "field-service", "hr-tool", "real-estate", "freight-forwarding", "construction", "dashboard", "vendor-management", "facility-management"]
 DEMO_ORDER = [s for s in DEMO_ORDER if (ROOT / "src" / "demos" / s / "demo.js").exists()]  # skip demos still in progress
 def _load(slug, name):
     spec = _ilu.spec_from_file_location(f"demo_{slug.replace('-', '_')}_{name}", DEMO_DIR / slug / f"{name}.py")
@@ -500,7 +500,7 @@ def home():
 </div></section>
 
 <section class="block" id="use-cases" style="padding-top:20px"><div class="wrap">
-  <div class="sec-head"><h2>Try it before you talk to us</h2><p>{["Four","Five","Six","Seven","Eight"][len(USE_CASES)-4] if 4 <= len(USE_CASES) <= 8 else len(USE_CASES)} working demos of the kind of software we build. Pick one, switch between the roles and click through it: everything runs in your browser on example data.</p></div>
+  <div class="sec-head"><h2>Try it before you talk to us</h2><p>{["Four","Five","Six","Seven","Eight","Nine","Ten"][len(USE_CASES)-4] if 4 <= len(USE_CASES) <= 10 else len(USE_CASES)} working demos of the kind of software we build. Pick one, switch between the roles and click through it: everything runs in your browser on example data.</p></div>
   {uc_switch(r)}
 </div></section>
 
