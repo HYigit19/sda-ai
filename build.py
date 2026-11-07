@@ -242,17 +242,32 @@ def spark_g():
     _spark_n[0] += 1
     i = f"sg{_spark_n[0]}"
     return (f'<svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="{i}" x1="0" y1="0" x2="1" y2="1">'
-            f'<stop offset="0" stop-color="#17A39D"/><stop offset="1" stop-color="#FF7D5E"/></linearGradient></defs>'
+            f'<stop offset="0" style="stop-color:var(--teal-2)"/><stop offset="1" style="stop-color:var(--coral)"/></linearGradient></defs>'
             f'<path d="M12 0c.6 5.8 3.4 9.9 12 12-8.6 2.1-11.4 6.2-12 12-.6-5.8-3.4-9.9-12-12 8.6-2.1 11.4-6.2 12-12z" fill="url(#{i})"/></svg>')
 def SPG():
     return f'<span class="sp">{spark_g()}</span>'
 SP = '<span class="sp" style="color:var(--teal-2)">' + SPARK + '</span>'
 CHECK = '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.2" fill="currentColor" opacity=".16"/><path d="M4.8 8.3 7 10.4l4.2-4.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-FAVICON = "data:image/svg+xml," + ("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%2317A39D'/><stop offset='1' stop-color='%23FF7D5E'/></linearGradient></defs>"
-           "<rect width='32' height='32' rx='9' fill='%23ffffff'/><path d='M16 4c.5 5 2.8 8.3 12 12-9.2 3.7-11.5 7-12 12-.5-5-2.8-8.3-12-12 9.2-3.7 11.5-7 12-12z' fill='url(%23g)'/></svg>")
+
+_logo_n = [0]
+def logo_svg(cls="logo-svg"):
+    """Cloud logo (from the brand artwork), drawn with the theme colours."""
+    _logo_n[0] += 1
+    g = f"lg{_logo_n[0]}"
+    return (f'<svg class="{cls}" viewBox="0 0 172 56" role="img" aria-label="{BRAND}"><defs><linearGradient id="{g}" x1="0" y1="1" x2="1" y2="0">'
+            f'<stop offset="0" style="stop-color:var(--teal)"/><stop offset="1" style="stop-color:var(--teal-glow)"/></linearGradient></defs>'
+            f'<circle cx="28" cy="28" r="27" fill="url(#{g})"/>'
+            '<path d="M17.5 34.5a6.6 6.6 0 0 1 .9-13.1 9.6 9.6 0 0 1 18.4-3 7.6 7.6 0 0 1 3.3 16.1z" fill="#fff" fill-opacity=".95"/>'
+            '<path d="M26.5 20.2a7.4 7.4 0 0 1 9.6 6.6 7 7 0 0 0-6.6 7.7h-4.4a8.7 8.7 0 0 1 1.4-14.3z" fill="#fff" fill-opacity=".55" style="mix-blend-mode:multiply"/>'
+            '<g fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"><path d="M23 34.5v3.6h-4"/><path d="M28 34.5v6.4"/><path d="M33 34.5v3.6h4"/></g>'
+            '<circle cx="17" cy="38.1" r="1.9" fill="none" stroke="#fff" stroke-width="1.5"/>'
+            '<circle cx="28" cy="42.8" r="2.3" style="fill:var(--coral)" stroke="#fff" stroke-width="1.4"/>'
+            '<circle cx="39" cy="38.1" r="1.9" style="fill:var(--coral)" stroke="#fff" stroke-width="1.3"/>'
+            '<text x="64" y="31" font-family="Geist, system-ui, sans-serif" font-size="28" font-weight="800" letter-spacing="-.5" style="fill:var(--ink)">SDA</text>'
+            '<text x="65" y="46.5" font-family="Geist, system-ui, sans-serif" font-size="9.4" font-weight="600" letter-spacing="2.9" style="fill:var(--teal)">AI SERVICES</text></svg>')
 
 def logo(r):
-    return f'<a class="logo" href="{r}index.html"><img src="{r}assets/brand/logo.svg" alt="{BRAND}" width="135" height="40"></a>'
+    return f'<a class="logo" href="{r}index.html" aria-label="{BRAND} home">{logo_svg()}</a>'
 
 def head(r, path, title, meta, schema=None, demo=False):
     url = SITE_URL + "/" + path
@@ -357,12 +372,12 @@ VIS = {
     <div class="typing-dots"><i></i><i></i><i></i></div></div>''',
   "workflow-automation": '<div aria-hidden="true"><div class="flowv"><span>' + _I('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>') + '</span><span>' + _I('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>') + '</span><span>' + _I('<path d="M20 6 9 17l-5-5"/>') + '</span><span>' + _I('<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/>') + '</span><i class="pulse"></i></div><div class="flowv-l"><span>Email</span><span>Extract</span><span>Approve</span><span>ERP</span></div></div>',
   "data-management": '<div class="dedupe" aria-hidden="true"><span><s>NORDWERK METALS GMBH</s></span><span><s>Nordwerk Metal</s></span><span class="keep">Nordwerk Metals</span></div>',
-  "web-applications": '<div class="browserv" aria-hidden="true"><div class="bar"><i></i><i></i><i></i></div><div class="bd"><div><u></u><u></u><u></u></div><div><u class="hi" style="width:60%"></u><u></u><u style="width:80%"></u><u style="width:45%"></u></div></div></div>',
+  "web-applications": '<div class="appv" aria-hidden="true"><div class="appv-bar"><i></i><i></i><i></i><span>portal.yourcompany.com</span></div><div class="appv-bd"><div class="appv-nav"><b class="on">Orders</b><b>Invoices</b><b>Support</b></div><div class="appv-main"><div class="appv-h"><span>Your orders</span><em>+ New request</em></div><div class="appv-row"><span><b>#4471</b> 40 units</span><i class="st ok">Shipped</i></div><div class="appv-row"><span><b>#4468</b> 12 units</span><i class="st">Delivered</i></div><div class="appv-row"><span><b>#4502</b> Quote ready</span><i class="st act">Approve</i></div></div></div></div>',
   "mobile-apps": '<div class="phonev" aria-hidden="true"><span class="ok"><i></i>Photo added</span><span class="ok"><i></i>GPS confirmed</span><span class="ok"><i></i>Checklist done</span><span><i></i>Customer signature</span></div>',
   "sap-integration": '''<svg class="hubv" viewBox="0 0 300 110" aria-hidden="true">
-    <defs><linearGradient id="hl" x1="0" x2="1"><stop offset="0" stop-color="#63D9CC"/><stop offset="1" stop-color="#FFA88F"/></linearGradient></defs>
+    <defs><linearGradient id="hl" x1="0" x2="1"><stop offset="0" style="stop-color:var(--teal-glow)"/><stop offset="1" style="stop-color:var(--coral-glow)"/></linearGradient></defs>
     <path d="M150 55 L40 22 M150 55 L40 88 M150 55 L260 22 M150 55 L260 88" stroke="url(#hl)" stroke-width="2" fill="none" stroke-dasharray="4 5"/>
-    <circle cx="150" cy="55" r="22" fill="#0E1B22"/><path d="M150 43c.3 3.1 1.8 5.3 6.5 7-4.7 1.7-6.2 3.9-6.5 7-.3-3.1-1.8-5.3-6.5-7 4.7-1.7 6.2-3.9 6.5-7z" fill="#FFA88F" transform="translate(0 5)"/>
+    <circle cx="150" cy="55" r="22" style="fill:var(--ink)"/><path d="M150 43c.3 3.1 1.8 5.3 6.5 7-4.7 1.7-6.2 3.9-6.5 7-.3-3.1-1.8-5.3-6.5-7 4.7-1.7 6.2-3.9 6.5-7z" style="fill:var(--coral-glow)" transform="translate(0 5)"/>
     <g font-family="Geist, system-ui" font-size="12" fill="#243640" text-anchor="middle">
       <rect x="10" y="10" width="60" height="24" rx="12" fill="#fff" stroke="rgba(14,27,34,.12)"/><text x="40" y="26">ERP</text>
       <rect x="10" y="76" width="60" height="24" rx="12" fill="#fff" stroke="rgba(14,27,34,.12)"/><text x="40" y="92">CRM</text>
@@ -707,7 +722,7 @@ def main():
     shutil.copy(ROOT / "src" / "_headers", OUT / "_headers")
     (OUT / "robots.txt").write_text(f"User-agent: *\nAllow: /\nSitemap: {SITE_URL}/sitemap.xml\n")
     (OUT / "site.webmanifest").write_text(json.dumps({"name": BRAND, "short_name": "SDA AI", "start_url": "/", "display": "standalone",
-        "background_color": "#F7F9F9", "theme_color": "#0D7270", "icons": [
+        "background_color": "#F8F7F5", "theme_color": "#C2410C", "icons": [
             {"src": "/assets/brand/icon-192.png", "sizes": "192x192", "type": "image/png"},
             {"src": "/assets/brand/icon-512.png", "sizes": "512x512", "type": "image/png"}]}, indent=2))
     # Cloudflare Pages serves the repository root, so mirror the finished site there as well.

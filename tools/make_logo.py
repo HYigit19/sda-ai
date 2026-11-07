@@ -16,8 +16,9 @@ OUT = ROOT / "src" / "assets" / "brand"
 OUT.mkdir(parents=True, exist_ok=True)
 FONT = Path(__file__).with_name("geist.woff2")
 
-INK, TEAL_TEXT, WHITE = "#0E1B22", "#0D7270", "#FFFFFF"
-G1, G2 = "#17A39D", "#FF7D5E"          # teal -> coral
+INK, TEAL_TEXT, WHITE = "#17181C", "#C2410C", "#FFFFFF"
+G1, G2 = "#C2410C", "#FDA978"          # orange gradient (dark -> light)
+DOT = "#0EA5E9"                         # sky-blue circuit dots
 SPARK = "M12 0c.6 5.8 3.4 9.9 12 12-8.6 2.1-11.4 6.2-12 12-.6-5.8-3.4-9.9-12-12 8.6-2.1 11.4-6.2 12-12z"
 
 def font_at(w):
@@ -41,20 +42,17 @@ def text_path(font, text, size, tracking_em=0.0):
     return " ".join(ds), x, cap
 
 def mark(x, y, size, gid):
-    """Gradient squircle with a white sparkle and a small companion sparkle."""
-    r = size * 0.28
-    big = size * 0.56 / 24      # sparkle scale
-    small = size * 0.2 / 24
-    # teal base + coral glow from the bottom-right corner (no muddy teal/coral midpoint)
-    return (f'<defs><linearGradient id="{gid}" x1="0" y1="0" x2="1" y2="1">'
-            f'<stop offset="0" stop-color="#1FB8AC"/><stop offset="1" stop-color="#0B7774"/></linearGradient>'
-            f'<radialGradient id="{gid}c" cx="1" cy="1" r=".78"><stop offset="0" stop-color="{G2}"/><stop offset=".4" stop-color="{G2}" stop-opacity=".6"/><stop offset="1" stop-color="{G2}" stop-opacity="0"/></radialGradient>'
-            f'<radialGradient id="{gid}h" cx=".22" cy=".12" r=".7"><stop offset="0" stop-color="#fff" stop-opacity=".4"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>'
-            f'<rect x="{x}" y="{y}" width="{size}" height="{size}" rx="{r:.2f}" fill="url(#{gid})"/>'
-            f'<rect x="{x}" y="{y}" width="{size}" height="{size}" rx="{r:.2f}" fill="url(#{gid}c)"/>'
-            f'<rect x="{x}" y="{y}" width="{size}" height="{size}" rx="{r:.2f}" fill="url(#{gid}h)"/>'
-            f'<path d="{SPARK}" fill="{WHITE}" transform="translate({x + size*0.17:.2f} {y + size*0.27:.2f}) scale({big:.4f})"/>'
-            f'<path d="{SPARK}" fill="{WHITE}" fill-opacity=".9" transform="translate({x + size*0.66:.2f} {y + size*0.13:.2f}) scale({small:.4f})"/>')
+    """Gradient circle with a white cloud and three circuit lines (same drawing as the site header)."""
+    k = size / 56
+    return (f'<defs><linearGradient id="{gid}" x1="0" y1="1" x2="1" y2="0">'
+            f'<stop offset="0" stop-color="{G1}"/><stop offset="1" stop-color="{G2}"/></linearGradient></defs>'
+            f'<g transform="translate({x:.2f} {y:.2f}) scale({k:.4f})">'
+            f'<circle cx="28" cy="28" r="27" fill="url(#{gid})"/>'
+            '<path d="M17.5 34.5a6.6 6.6 0 0 1 .9-13.1 9.6 9.6 0 0 1 18.4-3 7.6 7.6 0 0 1 3.3 16.1z" fill="#fff" fill-opacity=".95"/>'
+            '<g fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"><path d="M23 34.5v3.6h-4"/><path d="M28 34.5v6.4"/><path d="M33 34.5v3.6h4"/></g>'
+            '<circle cx="17" cy="38.1" r="1.9" fill="none" stroke="#fff" stroke-width="1.5"/>'
+            f'<circle cx="28" cy="42.8" r="2.3" fill="{DOT}" stroke="#fff" stroke-width="1.4"/>'
+            f'<circle cx="39" cy="38.1" r="1.9" fill="{DOT}" stroke="#fff" stroke-width="1.3"/></g>')
 
 def svg(w, h, body, title):
     return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w:.0f} {h:.0f}" width="{w:.0f}" height="{h:.0f}" role="img" aria-label="{title}">'
@@ -71,7 +69,7 @@ def main():
     base1 = 34                 # baseline of SDA
     base2 = base1 + 20         # baseline of tagline
     W = tx + max(w1, w2) + 4
-    for name, c1, c2 in (("logo", INK, TEAL_TEXT), ("logo-white", WHITE, "#BFEDE6")):
+    for name, c1, c2 in (("logo", INK, TEAL_TEXT), ("logo-white", WHITE, "#FFD2B5")):
         body = (mark(0, 0, M, "g") +
                 f'<path d="{d1}" fill="{c1}" transform="translate({tx} {base1})"/>'
                 f'<path d="{d2}" fill="{c2}" transform="translate({tx + 1} {base2})"/>')
