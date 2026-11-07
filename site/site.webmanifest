@@ -3,8 +3,8 @@
   "short_name": "SDA AI",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#F7F9F9",
-  "theme_color": "#0D7270",
+  "background_color": "#F8F7F5",
+  "theme_color": "#C2410C",
   "icons": [
     {
       "src": "/assets/brand/icon-192.png",
