@@ -1,0 +1,20 @@
+{
+  "name": "SDA AI Services",
+  "short_name": "SDA AI",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F7F9F9",
+  "theme_color": "#0D7270",
+  "icons": [
+    {
+      "src": "/assets/brand/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/brand/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

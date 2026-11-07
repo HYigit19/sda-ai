@@ -1,0 +1,876 @@
+#!/usr/bin/env python3
+"""Builds the static SDA AI Services website into ./site.
+
+Edit content in this file (SERVICES, USE_CASES, page functions), then run:
+    python3 build.py
+Change SITE_URL and EMAIL before going live.
+"""
+import json, shutil, html
+from pathlib import Path
+
+SITE_URL = "https://sda-ai.pages.dev"      # Cloudflare Pages address. Change to your own domain once it is connected.
+EMAIL = "hello@sda-ai.services"            # TODO: your real email
+BRAND = "SDA AI Services"
+ROOT = Path(__file__).parent
+OUT = ROOT / "site"
+
+e = html.escape
+
+# --------------------------------------------------------------------------
+# Content
+# --------------------------------------------------------------------------
+ICONS = {
+  "agents": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="7" width="16" height="12" rx="3"/><path d="M12 3v4M9 12h.01M15 12h.01M9 16h6"/></svg>',
+  "flow": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h10M4 12h16M4 17h7"/><circle cx="18" cy="7" r="2"/><circle cx="15" cy="17" r="2"/></svg>',
+  "web": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 9h18M8 21h8"/></svg>',
+  "mobile": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18h2"/></svg>',
+  "chart": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
+  "data": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><ellipse cx="12" cy="5.5" rx="7.5" ry="3"/><path d="M4.5 5.5v6.5c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3V5.5M4.5 12v6.5c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3V12"/></svg>',
+  "plug": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 7 3 12l5 5M16 7l5 5-5 5M14 4l-4 16"/></svg>',
+}
+
+SERVICES = [
+  dict(slug="ai-agents", icon="agents", name="AI agents & assistants",
+    title="AI Agent Development & Custom AI Assistants",
+    meta="We build custom AI agents and chat assistants that answer from your documents and act in your tools. RAG, tool calling, guardrails and secure hosting.",
+    h1="AI agents that answer, decide and act.",
+    lede="We build assistants that answer from your own knowledge and agents that complete tasks in your systems, with guardrails and human approval where it matters.",
+    short="Assistants that answer from your documents and agents that take actions in your tools, with guardrails and human approval.",
+    chips=["RAG", "Tool calling", "Chat & voice"],
+    facts=[("Typical first release", "4–8 weeks"), ("Hosting", "Your cloud or ours"), ("Models", "Claude, GPT, Gemini, open source"), ("Channels", "Web, Teams, Slack, phone")],
+    intro=["An AI agent is software that understands a request in plain language, looks up the right information and carries out the next step. A support agent can read a ticket, check the order in your ERP and draft the reply. An internal assistant can answer policy questions with a link to the source.",
+           "We design the agent around one measurable job, connect it to your data with retrieval-augmented generation (RAG), and add the controls an enterprise needs: permissions, logging, evaluation and a clear hand-off to people."],
+    deliver=[("Knowledge assistants", "Chat over manuals, policies, contracts and wikis, with citations so users can check every answer."),
+             ("Customer support agents", "Agents that resolve common tickets, update CRM records and escalate the rest with a summary."),
+             ("Task agents", "Agents that call your APIs to create orders, book appointments or update records, with approval steps."),
+             ("Voice & chat channels", "Deploy on your website, Microsoft Teams, Slack, WhatsApp or the phone."),
+             ("Evaluation & guardrails", "Test sets, accuracy tracking, PII redaction and topic limits before and after launch."),
+             ("Agent operations", "Monitoring, cost tracking and continuous improvement once the agent is live.")],
+    examples=[("Customer service", "Resolve order-status and returns questions automatically, 24/7."),
+              ("Internal helpdesk", "Answer IT and HR questions from your handbook with source links."),
+              ("Sales", "Qualify inbound leads and prepare meeting briefs from CRM data."),
+              ("Procurement", "Compare supplier offers and flag contract risks.")],
+    faq=[("What is the difference between a chatbot and an AI agent?", "A chatbot answers questions. An AI agent can also take actions, such as looking up an order, updating a record or sending an email, using tools you give it access to."),
+         ("Can the AI use our internal documents securely?", "Yes. We use retrieval-augmented generation, so documents stay in your storage and the agent only sees what the user is allowed to see. Your data is not used to train public models."),
+         ("Which AI model do you use?", "We choose per project based on accuracy, cost and data-protection needs. We work with Claude, GPT, Gemini and open-source models that can run in your own cloud."),
+         ("How do you prevent wrong answers?", "We build a test set from real questions, measure accuracy before launch, require citations, and route uncertain cases to a person.")],
+    usecase="hr-tool"),
+  dict(slug="workflow-automation", icon="flow", name="Workflow automation",
+    title="AI Workflow Automation & Business Process Automation",
+    meta="Automate approvals, document processing, complaints and reporting with AI. We map your processes and automate them end to end with clear human hand-offs.",
+    h1="Automate the work nobody should do by hand.",
+    lede="We find the repetitive steps in approvals, documents, complaints and reporting, and automate them end to end with clear hand-offs to your team.",
+    short="Approvals, complaints, reporting and data entry, automated end to end with clear hand-offs to people.",
+    chips=["Process mining", "Document AI", "Approvals"],
+    facts=[("Typical first release", "3–6 weeks"), ("Works with", "ERP, CRM, email, SharePoint"), ("Approach", "Measure, automate, report"), ("Support", "Ongoing optimisation")],
+    intro=["Most companies run on processes that move data between emails, PDFs, spreadsheets and business systems. Each step is small, but together they cost hours every day and cause delays and errors.",
+           "We map the process with the people who run it, decide which steps AI can handle reliably, and build the automation with exception queues, audit trails and dashboards so you can see the time saved."],
+    deliver=[("Process discovery", "Workshops and data analysis to find the steps with the highest automation value."),
+             ("Document processing", "Read invoices, delivery notes, forms and contracts and extract the data into your systems."),
+             ("Smart routing", "Classify emails, tickets and complaints and send them to the right team with a priority."),
+             ("Approval workflows", "Digital approvals with rules, reminders, escalation and full history."),
+             ("Report automation", "Recurring reports generated and sent automatically, with AI-written summaries."),
+             ("Monitoring", "Dashboards for volumes, processing times and exceptions.")],
+    examples=[("Accounts payable", "Capture invoices, match them to orders and route exceptions."),
+              ("Complaints", "Classify incoming complaints and draft responses for review."),
+              ("Order entry", "Turn customer emails and PDFs into ERP sales orders."),
+              ("Facility requests", "Triage maintenance tickets and dispatch the right team.")],
+    faq=[("Which processes are best to automate first?", "High-volume, rule-based processes with digital inputs, such as invoice capture, ticket routing or order entry. We usually start with one process and measure the result."),
+         ("Do we need to replace our existing systems?", "No. We connect to the systems you already use through APIs, email, file shares or, where needed, robotic process automation."),
+         ("What happens when the AI is unsure?", "Uncertain cases go to an exception queue where a person decides. Their decisions can be used to improve the automation over time."),
+         ("How do we measure success?", "We agree on a baseline before we start, such as hours per week or processing time, and report against it after launch.")],
+    usecase="facility-management"),
+  dict(slug="web-applications", icon="web", name="Custom web applications",
+    title="Custom Web Application Development with AI",
+    meta="Custom web apps, portals and SaaS products with AI built in. React, Next.js and Python, delivered fast, accessible and maintainable.",
+    h1="Web applications with AI built in.",
+    lede="Portals, internal tools and SaaS products, designed around your users and delivered as fast, accessible web apps your team can maintain.",
+    short="Portals, internal tools and SaaS products with AI built in, delivered as fast, maintainable web apps.",
+    chips=["React / Next.js", "APIs", "Cloud native"],
+    facts=[("Typical MVP", "6–12 weeks"), ("Frontend", "React, Next.js, TypeScript"), ("Backend", "Node.js, Python, PostgreSQL"), ("Hosting", "AWS, Azure, GCP")],
+    intro=["Off-the-shelf software rarely fits how your business actually works. A custom web application can match your process exactly, connect to your existing systems and include AI features where they add real value.",
+           "We take a product from first concept through design, development and launch, with automated tests, CI/CD and documentation so your team or ours can keep improving it."],
+    deliver=[("Product discovery", "User interviews, scope and a clickable prototype before development starts."),
+             ("UX/UI design", "Clean, accessible interfaces that follow WCAG and your brand."),
+             ("Full-stack development", "TypeScript frontends, robust APIs and well-modelled databases."),
+             ("AI features", "Search, summaries, document upload, recommendations and assistants inside your app."),
+             ("Customer & partner portals", "Secure self-service portals with single sign-on and role-based access."),
+             ("DevOps & hosting", "CI/CD pipelines, monitoring, backups and cloud infrastructure as code.")],
+    examples=[("Supplier portal", "Suppliers upload documents, confirm orders and see their scorecard."),
+              ("Internal tools", "Replace spreadsheets with a proper app for planning or approvals."),
+              ("SaaS MVP", "Launch a new AI product to your first customers."),
+              ("Customer portal", "Let customers track orders, tickets and invoices online.")],
+    faq=[("How long does it take to build a web application?", "A focused MVP usually takes 6 to 12 weeks. We deliver in two-week sprints so you see working software early and can adjust priorities."),
+         ("Who owns the code?", "You do. All source code, designs and documentation are transferred to you."),
+         ("Can you take over an existing application?", "Yes. We start with a code and architecture review, then stabilise and extend the application."),
+         ("Do you provide support after launch?", "Yes. We offer maintenance and further development packages with agreed response times.")],
+    usecase="vendor-management"),
+  dict(slug="mobile-apps", icon="mobile", name="Mobile & field apps",
+    title="Mobile App & Field Service App Development",
+    meta="iOS, Android and progressive web apps for field teams: job reports, photos, GPS, signatures and offline capture that syncs back to your systems.",
+    h1="Apps for teams that work on the move.",
+    lede="Mobile apps for technicians, inspectors and sales teams: capture photos, GPS and signatures on site, work offline, and sync to the office in real time.",
+    short="Apps for teams on the move: job reports, photos, GPS and offline capture with instant sync to the office.",
+    chips=["iOS & Android", "Offline-first", "PWA"],
+    facts=[("Typical first release", "8–12 weeks"), ("Platforms", "iOS, Android, web"), ("Tech", "Flutter, React Native, PWA"), ("Works offline", "Yes")],
+    intro=["Field teams still lose time with paper forms, phone calls and re-typing data back at the office. A well-designed mobile app removes that work and gives managers a live view of what is happening.",
+           "We build cross-platform apps that are simple enough to use with gloves on, work without a signal and connect to your ERP, CRM or maintenance system. AI features such as photo recognition and voice notes speed up reporting further."],
+    deliver=[("Field service apps", "Job lists, checklists, time tracking, photos and customer signatures."),
+             ("Inspection & audit apps", "Digital checklists with photo evidence and automatic PDF reports."),
+             ("Offline sync", "Reliable offline mode that syncs as soon as a connection is available."),
+             ("AI on the device", "Voice-to-text reports, photo classification and damage detection."),
+             ("Back-office web app", "Planning, dispatch and reporting for the office team."),
+             ("App store release", "Publishing, updates and device management for your company.")],
+    examples=[("Maintenance", "Technicians close jobs on site with photos and signatures."),
+              ("Facility rounds", "Guided inspection rounds with automatic defect tickets."),
+              ("Construction", "Daily site reports with GPS-tagged photos."),
+              ("Sales visits", "Visit reports and orders captured in the field.")],
+    faq=[("Native app or progressive web app?", "A progressive web app is faster and cheaper to roll out. Native or cross-platform apps make sense when you need offline mode, camera features or app store distribution. We advise per project."),
+         ("Does the app work without internet?", "Yes. We design offline-first, so data is stored on the device and synced when a connection returns."),
+         ("Can the app connect to our ERP?", "Yes, we connect it to your ERP and other business systems."),
+         ("How do you handle data protection?", "Data is encrypted on the device and in transit, and we follow GDPR requirements for location and photo data.")],
+    usecase="field-service"),
+  dict(slug="data-management", icon="data", name="Data management",
+    title="Data Management Services for AI: Integration, Quality & Governance",
+    meta="Get your data ready for AI. We connect, clean and govern data from ERP, CRM and files, and build the pipelines, master data and knowledge bases your AI can trust.",
+    h1="Clean, connected data your AI can trust.",
+    lede="AI is only as good as the data behind it. We connect your sources, fix quality issues and set up the pipelines, master data and governance that keep your data reliable.",
+    short="Connect, clean and govern data from all your systems so AI and reporting can rely on it.",
+    chips=["Data pipelines", "Data quality", "Governance"],
+    facts=[("Typical first release", "3–6 weeks"), ("Sources", "ERP, CRM, files, APIs"), ("Storage", "Warehouse, lakehouse, vector DB"), ("Focus", "Quality & governance")],
+    intro=["Most AI projects that stall do so because of data, not models. Customer records exist three times, supplier names are spelled five ways, and the documents an assistant needs are scattered across drives and inboxes.",
+           "We bring your data into shape: we connect the sources, clean and deduplicate records, define who owns what, and build pipelines that keep everything current. The result is a reliable foundation for AI agents, automation and reporting."],
+    deliver=[("Data integration", "Reliable pipelines from ERP, CRM, databases, files and APIs into one governed platform."),
+             ("Data quality & cleansing", "Find and fix duplicates, gaps and inconsistencies, with AI-assisted matching."),
+             ("Master data management", "One trusted record for customers, suppliers, materials and products."),
+             ("Knowledge bases for AI", "Prepare documents and records for retrieval, with vector search and access rules."),
+             ("Governance & access", "Ownership, data catalog, lineage and role-based access, documented and auditable."),
+             ("Reporting foundation", "Clean, modelled data that feeds your BI tools and management reports.")],
+    examples=[("Supplier master data", "Merge duplicate suppliers and keep certifications and contracts current."),
+              ("Customer 360", "Combine CRM, orders and support history into one customer view."),
+              ("Document knowledge base", "Turn manuals, policies and contracts into a searchable source for AI assistants."),
+              ("System migration", "Cleanse and validate data before moving to a new ERP or CRM.")],
+    faq=[("Why does data quality matter for AI?", "AI agents and forecasts repeat whatever is in your data. Duplicates, gaps and outdated records lead directly to wrong answers and bad decisions."),
+         ("Do we need a data warehouse first?", "Not necessarily. We start with the data the first use case needs and grow the platform when volume or complexity requires it."),
+         ("How do you handle sensitive data?", "We apply role-based access, encryption and masking, and keep data in the environment you choose."),
+         ("Can you work with our existing tools?", "Yes. We build on the databases, cloud platforms and BI tools you already use wherever that makes sense.")],
+    usecase="vendor-management"),
+  dict(slug="sap-integration", icon="plug", name="Enterprise & SAP integration",
+    title="SAP AI Integration, SAP BTP Extensions & ERP Integration",
+    meta="Connect AI to SAP S/4HANA, SAP BTP, CRMs and legacy systems. Side-by-side extensions, APIs and middleware without disrupting operations.",
+    h1="Bring AI to the systems you already run.",
+    lede="We connect AI agents, apps and dashboards to SAP S/4HANA, SAP BTP, CRMs and legacy databases, safely and without disrupting daily operations.",
+    short="Connect AI to SAP S/4HANA, SAP BTP extensions, CRMs and legacy databases without disrupting operations.",
+    chips=["SAP BTP", "S/4HANA", "Middleware"],
+    facts=[("Systems", "SAP ECC, S/4HANA, BTP"), ("Also", "Dynamics, Salesforce, custom DBs"), ("Approach", "Clean core, side-by-side"), ("Integration", "APIs, events, middleware")],
+    intro=["Your ERP holds the data that makes AI useful: orders, materials, suppliers, quality records and customers. The challenge is connecting to it securely without modifying the core system.",
+           "We build side-by-side extensions on SAP BTP and integration layers that expose the right data to AI applications through governed APIs. That keeps your SAP core clean and upgrade-safe."],
+    deliver=[("Integration architecture", "Target architecture, API strategy and security concept."),
+             ("SAP BTP extensions", "Side-by-side apps with SAP Build, CAP and Fiori."),
+             ("AI on ERP data", "Agents and assistants that read and write SAP data through approved APIs."),
+             ("API & middleware", "SAP Integration Suite, REST and OData services, event-driven integration."),
+             ("Legacy integration", "Connect older databases and file-based interfaces safely."),
+             ("Data migration support", "Data cleansing and validation with AI for S/4HANA projects.")],
+    examples=[("Quality management", "Summarise inspection results and suggest usage decisions."),
+              ("Purchasing", "Draft purchase orders and flag supplier risks from SAP data."),
+              ("Sales", "Turn customer emails into sales orders in S/4HANA."),
+              ("Maintenance", "Create maintenance notifications from mobile reports.")],
+    faq=[("Can you connect AI to SAP?", "Yes, we connect AI to SAP and other ERP systems through secure, approved APIs."),
+         ("Will the integration disrupt daily operations?", "No. We build alongside your existing systems and roll out in steps, with testing before anything goes live."),
+         ("Can AI write data back into our systems?", "Yes, with permission checks, and with a human approval step for critical transactions."),
+         ("Which other systems can you integrate?", "CRMs, document management, databases and most systems with an API, including older file-based interfaces.")],
+    usecase="vendor-management"),
+]
+
+USE_CASES = [
+  dict(slug="vendor-management", name="Vendor management", label="Procurement",
+    title="AI Vendor Management Software Demo: RFQs, Complaints, Workflows & DMS",
+    meta="Try an interactive AI vendor management demo: supplier risk scoring, RFQs with quote comparison, supplier complaints and 8D, approval workflows and a document management system.",
+    h1="Vendor management, from RFQ to complaint.",
+    lede="One app for the whole supplier lifecycle: score risks, send RFQs and compare quotes, handle complaints with 8D, run approvals, and keep every certificate and contract on file.",
+    card="Supplier risk, RFQs, complaints, approval workflows and documents in one app.",
+    how=[("Send an RFQ", "Open RFQs, invite suppliers, let AI draft the text, then watch quotes arrive and compare them."), ("Handle a complaint", "Log a defect, let AI classify it, send the 8D request and close it when the root cause comes back."), ("Approve and file", "Award a quote through the approval workflow and upload documents that AI files automatically.")],
+    services=["web-applications", "workflow-automation", "data-management"]),
+  dict(slug="field-service", name="Field service & proof of delivery", label="Field teams",
+    title="Field Service App Demo: GPS Check-in, Photos & Proof of Delivery",
+    meta="Try an interactive field service app demo: technicians check in on a map, take photos, collect a customer signature and send proof of delivery or service to the office in real time.",
+    h1="Proof of delivery and service, straight from the field.",
+    lede="Drivers and technicians mark their location, take photos, tick off the checklist and collect a signature. The office sees every job live on the map, with a verified proof for each one.",
+    card="GPS check-in, photos, signatures and live proof of delivery or service.",
+    how=[("Start a job", "Pick a job in the technician app and start the route. The van moves on the office map."), ("Check in and take photos", "Tap the map or use your device location, then take or add photos."), ("Sign and send", "Tick the checklist, let the customer sign, and see the proof arrive in the office.")],
+    services=["mobile-apps", "workflow-automation", "web-applications"]),
+  dict(slug="facility-management", name="Facility management", label="Facilities",
+    title="AI Facility Management Software Demo",
+    meta="Try an interactive AI facility management demo: live floor plan with sensors, AI ticket triage and predictive maintenance.",
+    h1="Facility management that triages itself.",
+    lede="Report a problem in plain language. AI finds the location, sets the priority and assigns the right team, while sensors and maintenance forecasts keep the building running.",
+    card="Live floor plan, AI ticket triage and predictive maintenance for buildings.",
+    how=[("Report an issue", "Type a problem in plain language or pick one of the examples."), ("Watch the triage", "AI sets category, priority, location and team, and the ticket appears on the plan."), ("Close the loop", "Dispatch the team or mark tickets resolved, and click rooms for live temperatures.")],
+    services=["workflow-automation", "mobile-apps", "data-management"]),
+  dict(slug="hr-tool", name="HR tool", label="People",
+    title="AI HR Software Demo: Recruiting, Leave & HR Assistant",
+    meta="Try an interactive AI HR tool demo: candidate matching, leave approvals with coverage checks and an HR assistant that answers from your handbook.",
+    h1="An HR tool that does the busywork.",
+    lede="Match candidates to the job profile, approve leave with an automatic coverage check, and let employees get answers from the handbook any time.",
+    card="Candidate matching, leave approvals with coverage checks and an HR assistant.",
+    how=[("Review candidates", "Open a candidate to see the skill match and suggested interview questions."), ("Approve leave", "The coverage check warns you before the team is short-staffed."), ("Ask the assistant", "Employees get policy answers with the source section.")],
+    services=["ai-agents", "workflow-automation", "web-applications"]),
+  dict(slug="furniture-shop", name="Furniture online shop", label="E-commerce",
+    title="AI Furniture Online Shop Demo with Room Advisor",
+    meta="Try an interactive AI furniture shop demo: an AI room advisor that builds a set within your budget, filters, product details, cart and a complete checkout.",
+    h1="An online shop with an AI room advisor.",
+    lede="Customers describe their room and budget, and the AI puts together a matching set. Browse, filter, add to cart and check out, all the way to the order confirmation.",
+    card="AI room advisor, product catalog, cart and complete checkout.",
+    how=[("Ask the advisor", "Describe your room and budget, or pick an example, and get a matching set."), ("Shop the catalog", "Filter by category, material and price, open a product and add it to the cart."), ("Check out", "Enter an address, pick delivery and assembly, and place a demo order.")],
+    services=["web-applications", "ai-agents", "data-management"]),
+  dict(slug="car-marketplace", name="Car dealer marketplace", label="Automotive",
+    title="Car Dealer Marketplace Demo with AI Car Finder",
+    meta="Try an interactive car dealer marketplace demo: AI car finder, filters, price ratings, comparison, financing calculator, trade-in valuation, test drive booking and reservations.",
+    h1="A car marketplace that sells for the dealer.",
+    lede="Buyers describe what they need and the AI finds matching cars. Every listing shows a fair-price rating and a monthly rate, and buyers can compare, value their trade-in, book a test drive or reserve online.",
+    card="AI car finder, price ratings, financing, trade-in, test drives and reservations.",
+    how=[("Find a car", "Describe what you need or use the filters. Every car shows a price rating."), ("Compare and finance", "Compare up to three cars and adjust the down payment and term."), ("Book or reserve", "Book a test drive, value your trade-in or reserve a car for 48 hours.")],
+    services=["web-applications", "ai-agents", "data-management"]),
+]
+SVC = {s["slug"]: s for s in SERVICES}
+UC = {u["slug"]: u for u in USE_CASES}
+# --------------------------------------------------------------------------
+# Layout
+# --------------------------------------------------------------------------
+SPARK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0c.6 5.8 3.4 9.9 12 12-8.6 2.1-11.4 6.2-12 12-.6-5.8-3.4-9.9-12-12 8.6-2.1 11.4-6.2 12-12z" fill="currentColor"/></svg>'
+# gradient sparkle for headings + logo (teal -> coral), ids made unique per use
+_spark_n = [0]
+def spark_g():
+    _spark_n[0] += 1
+    i = f"sg{_spark_n[0]}"
+    return (f'<svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="{i}" x1="0" y1="0" x2="1" y2="1">'
+            f'<stop offset="0" stop-color="#17A39D"/><stop offset="1" stop-color="#FF7D5E"/></linearGradient></defs>'
+            f'<path d="M12 0c.6 5.8 3.4 9.9 12 12-8.6 2.1-11.4 6.2-12 12-.6-5.8-3.4-9.9-12-12 8.6-2.1 11.4-6.2 12-12z" fill="url(#{i})"/></svg>')
+def SPG():
+    return f'<span class="sp">{spark_g()}</span>'
+SP = '<span class="sp" style="color:var(--teal-2)">' + SPARK + '</span>'
+CHECK = '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.2" fill="currentColor" opacity=".16"/><path d="M4.8 8.3 7 10.4l4.2-4.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+FAVICON = "data:image/svg+xml," + ("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%2317A39D'/><stop offset='1' stop-color='%23FF7D5E'/></linearGradient></defs>"
+           "<rect width='32' height='32' rx='9' fill='%23ffffff'/><path d='M16 4c.5 5 2.8 8.3 12 12-9.2 3.7-11.5 7-12 12-.5-5-2.8-8.3-12-12 9.2-3.7 11.5-7 12-12z' fill='url(%23g)'/></svg>")
+
+def logo(r):
+    return f'<a class="logo" href="{r}index.html"><img src="{r}assets/brand/logo.svg" alt="{BRAND}" width="135" height="40"></a>'
+
+def head(r, path, title, meta, schema=None):
+    url = SITE_URL + "/" + path
+    full_title = title if title.endswith(BRAND) else f"{title} | {BRAND}"
+    ld = ""
+    for s in (schema or []):
+        ld += '<script type="application/ld+json">' + json.dumps(s, ensure_ascii=False) + "</script>\n"
+    return f"""<title>{e(full_title)}</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="{e(meta)}">
+<meta name="theme-color" content="#F7F9F9">
+<link rel="canonical" href="{url}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="{BRAND}">
+<meta property="og:title" content="{e(full_title)}">
+<meta property="og:description" content="{e(meta)}">
+<meta property="og:url" content="{url}">
+<meta property="og:image" content="{SITE_URL}/assets/brand/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:image" content="{SITE_URL}/assets/brand/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="{r}assets/brand/logo-mark.svg" type="image/svg+xml">
+<link rel="icon" href="{r}assets/brand/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="{r}assets/brand/apple-touch-icon.png">
+<link rel="manifest" href="{r}site.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="{r}assets/style.css">
+{ld}"""
+
+BURGER = '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 6.5h14M3 13.5h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>'
+
+def nav(r, active):
+    drop = "".join(f'<li><a href="{r}services/{s["slug"]}.html"><b>{e(s["name"])}</b><span>{e(", ".join(s["chips"]))}</span></a></li>' for s in SERVICES)
+    ucs = "".join(f'<li><a href="{r}use-cases/{u["slug"]}.html"><b>{e(u["name"])} demo</b><span>{e(u["card"])}</span></a></li>' for u in USE_CASES)
+    cur = lambda k: ' aria-current="page"' if active == k else ""
+    return f"""<div class="aurora" aria-hidden="true"><i class="a1"></i><i class="a2"></i><i class="a3"></i></div><div class="grain" aria-hidden="true"></div>
+<a class="skip" href="#main">Skip to content</a>
+<nav class="nav" aria-label="Main">
+  <div class="nav-in glass-strong">
+    {logo(r)}
+    <ul class="menu">
+      <li class="has-drop"><a href="{r}services/index.html"{cur("services")}>Services</a><ul class="drop glass-strong">{drop}</ul></li>
+      <li class="has-drop"><a href="{r}use-cases/index.html"{cur("use-cases")}>Use cases</a><ul class="drop glass-strong">{ucs}</ul></li>
+      <li><a href="{r}index.html#process">Process</a></li>
+      <li><a href="{r}contact.html"{cur("contact")}>Contact</a></li>
+      <li class="m-cta"><a class="btn btn-primary" href="{r}contact.html">Start a project <span class="arr">→</span></a></li>
+    </ul>
+    <div class="nav-cta">
+      <a class="btn btn-primary btn-sm" href="{r}contact.html">Start a project <span class="arr">→</span></a>
+      <button class="burger" type="button" aria-label="Open menu" aria-expanded="false">{BURGER}</button>
+    </div>
+  </div>
+</nav>"""
+
+def footer(r, demo=False):
+    svc = "".join(f'<li><a href="{r}services/{s["slug"]}.html">{e(s["name"])}</a></li>' for s in SERVICES)
+    ucs = "".join(f'<li><a href="{r}use-cases/{u["slug"]}.html">{e(u["name"])}</a></li>' for u in USE_CASES)
+    demo_js = f'\n<script src="{r}assets/demos.js"></script>' if demo else ""
+    return f"""<footer>
+  <div class="wrap">
+    <div class="foot glass">
+      <div>{logo(r)}<p>AI software, web and app development for companies that want working systems in production.</p></div>
+      <div><h4>Services</h4><ul>{svc}</ul></div>
+      <div><h4>Use cases</h4><ul>{ucs}</ul></div>
+      <div><h4>Company</h4><ul><li><a href="{r}index.html#process">Process</a></li><li><a href="{r}index.html#stack">Technology</a></li><li><a href="{r}contact.html">Contact</a></li><li>{EMAIL}</li></ul></div>
+    </div>
+    <div class="foot-base"><span>© <span id="yr">2026</span> {BRAND}</span><span><a href="{r}privacy.html">Privacy policy</a> · <a href="{r}legal-notice.html">Legal notice</a></span></div>
+  </div>
+</footer>
+<script src="{r}assets/main.js"></script>{demo_js}"""
+
+def cta_band(r, h="Ready to put AI to work?", p="Tell us about your process. We reply within one business day with first ideas and a proposed next step."):
+    return f"""<section class="block" style="padding-top:0"><div class="wrap"><div class="cta-card glass-strong"><h2>{h}</h2><p>{p}</p>
+<div class="cta-row"><a class="btn btn-primary" href="{r}contact.html">Book a discovery call <span class="arr">→</span></a><a class="btn btn-glass" href="{r}use-cases/index.html">Try the live demos</a></div></div></div></section>"""
+
+def crumbs(r, items):
+    li = "".join(f'<li><a href="{r}{href}">{e(n)}</a></li>' if href else f'<li aria-current="page">{e(n)}</li>' for n, href in items)
+    return f'<nav aria-label="Breadcrumb"><ol class="crumbs">{li}</ol></nav>'
+
+def crumb_ld(items):
+    return {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [
+        {"@type": "ListItem", "position": i + 1, "name": n, "item": SITE_URL + "/" + (p or "")} for i, (n, p) in enumerate(items)]}
+
+ORG_LD = {"@context": "https://schema.org", "@type": "Organization", "name": BRAND, "url": SITE_URL + "/", "email": EMAIL,
+          "logo": SITE_URL + "/assets/brand/logo.png",
+          "description": "AI software, web and app development: AI agents, workflow automation, custom web and mobile apps, data management and enterprise integration.",
+          "knowsLanguage": ["en"]}
+
+# ---- small visuals for the bento tiles ----
+_I = lambda p: f'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{p}</svg>'
+VIS = {
+  "ai-agents": '''<div class="chatv" aria-hidden="true">
+    <div class="bub u">Where is order 4471, and can I change the delivery address?</div>
+    <div class="bub a">It shipped this morning and arrives Thursday. I updated the address to Harbour Street 12 and sent you a new tracking link.<small>Checked: order system · carrier API</small></div>
+    <div class="bub u">Great. Can you also send me the invoice?</div>
+    <div class="typing-dots"><i></i><i></i><i></i></div></div>''',
+  "workflow-automation": '<div aria-hidden="true"><div class="flowv"><span>' + _I('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>') + '</span><span>' + _I('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>') + '</span><span>' + _I('<path d="M20 6 9 17l-5-5"/>') + '</span><span>' + _I('<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/>') + '</span><i class="pulse"></i></div><div class="flowv-l"><span>Email</span><span>Extract</span><span>Approve</span><span>ERP</span></div></div>',
+  "data-management": '<div class="dedupe" aria-hidden="true"><span><s>NORDWERK METALS GMBH</s></span><span><s>Nordwerk Metal</s></span><span class="keep">Nordwerk Metals</span></div>',
+  "web-applications": '<div class="browserv" aria-hidden="true"><div class="bar"><i></i><i></i><i></i></div><div class="bd"><div><u></u><u></u><u></u></div><div><u class="hi" style="width:60%"></u><u></u><u style="width:80%"></u><u style="width:45%"></u></div></div></div>',
+  "mobile-apps": '<div class="phonev" aria-hidden="true"><span class="ok"><i></i>Photo added</span><span class="ok"><i></i>GPS confirmed</span><span class="ok"><i></i>Checklist done</span><span><i></i>Customer signature</span></div>',
+  "sap-integration": '''<svg class="hubv" viewBox="0 0 300 110" aria-hidden="true">
+    <defs><linearGradient id="hl" x1="0" x2="1"><stop offset="0" stop-color="#63D9CC"/><stop offset="1" stop-color="#FFA88F"/></linearGradient></defs>
+    <path d="M150 55 L40 22 M150 55 L40 88 M150 55 L260 22 M150 55 L260 88" stroke="url(#hl)" stroke-width="2" fill="none" stroke-dasharray="4 5"/>
+    <circle cx="150" cy="55" r="22" fill="#0E1B22"/><path d="M150 43c.3 3.1 1.8 5.3 6.5 7-4.7 1.7-6.2 3.9-6.5 7-.3-3.1-1.8-5.3-6.5-7 4.7-1.7 6.2-3.9 6.5-7z" fill="#FFA88F" transform="translate(0 5)"/>
+    <g font-family="Geist, system-ui" font-size="12" fill="#243640" text-anchor="middle">
+      <rect x="10" y="10" width="60" height="24" rx="12" fill="#fff" stroke="rgba(14,27,34,.12)"/><text x="40" y="26">ERP</text>
+      <rect x="10" y="76" width="60" height="24" rx="12" fill="#fff" stroke="rgba(14,27,34,.12)"/><text x="40" y="92">CRM</text>
+      <rect x="230" y="10" width="60" height="24" rx="12" fill="#fff" stroke="rgba(14,27,34,.12)"/><text x="260" y="26">Docs</text>
+      <rect x="230" y="76" width="60" height="24" rx="12" fill="#fff" stroke="rgba(14,27,34,.12)"/><text x="260" y="92">APIs</text></g></svg>''',
+}
+TILE_CLASS = {"ai-agents": "t-agents"}
+
+def bento(r):
+    out = []
+    for s in SERVICES:
+        cls = TILE_CLASS.get(s["slug"], "")
+        out.append(f"""<a class="tile glass {cls}" href="{r}services/{s['slug']}.html">
+  <div class="tile-vis">{VIS[s['slug']]}</div>
+  <h3>{e(s['name'])}</h3><p>{e(s['short'])}</p>
+  <span class="link">Learn more <span class="arr">→</span></span></a>""")
+    return '<div class="bento">' + "".join(out) + "</div>"
+
+def svc_card(r, s, i):
+    return f"""<a class="tile glass" href="{r}services/{s['slug']}.html">
+  <div class="tile-vis">{VIS[s['slug']]}</div>
+  <h3>{e(s['name'])}</h3><p>{e(s['short'])}</p>
+  <span class="link">Learn more <span class="arr">→</span></span></a>"""
+
+def _mrow(n, w, col, pill_cls, t):
+    return f'<div class="mini-row"><span>{n}</span><span class="mini-bar"><i style="width:{w}%;background:{col}"></i></span><span class="mini-pill {pill_cls}">{t}</span></div>'
+
+def _mai(t):
+    return f'<div class="mini-ai">{SPARK}<span>{t}</span></div>'
+
+MINI = {
+  "vendor-management": '<div class="mini"><div class="mini-top">Vendor Hub</div>' + "".join(_mrow(*x) for x in [
+      ("Nordwerk Metals", 97, "var(--ok)", "p-ok", "Low"), ("Kestrel Electronics", 79, "var(--bad)", "p-bad", "High"),
+      ("Baltic Polymers", 88, "var(--warn)", "p-warn", "Medium"), ("Corvex Packaging", 98, "var(--ok)", "p-ok", "Low")])
+      + _mai("Kestrel: on-time delivery 79% and 61% of category spend. Qualify a second source.") + "</div>",
+  "facility-management": '<div class="mini"><div class="mini-top">Facility Desk</div><div class="mini-floor"><div></div><div></div><div class="w"></div><div></div><div></div><div class="x"></div><div></div><div></div><div></div><div></div><div class="w"></div><div></div></div>'
+      + _mai("“Water leaking in the kitchen” → Plumbing · High · today") + "</div>",
+  "hr-tool": '<div class="mini"><div class="mini-top">People Desk</div><div class="mini-kan"><div><i class="s"></i><i></i><i></i></div><div><i></i><i class="s"></i></div><div><i></i><i></i></div><div><i class="s"></i></div></div>'
+      + _mai("Priya Nair: 96% match. Suggested question on testing strategy.") + "</div>",
+  "furniture-shop": '<div class="mini"><div class="mini-top">Loft &amp; Linden</div>' + _mai("Small living room, light wood, under €1,500 → sofa, coffee table and lamp for €1,349") + "</div>",
+}
+
+def uc_switch(r):
+    tabs = "".join(f'<button type="button" role="tab" id="uct-{u["slug"]}" aria-controls="ucp-{u["slug"]}" aria-selected="{"true" if i == 0 else "false"}"{"" if i == 0 else " tabindex=\"-1\""}>{e(u["name"])}</button>' for i, u in enumerate(USE_CASES))
+    panels = ""
+    for i, u in enumerate(USE_CASES):
+        panels += f"""<div class="uc-panel" role="tabpanel" id="ucp-{u['slug']}" aria-labelledby="uct-{u['slug']}"{"" if i == 0 else " hidden"}>
+  <div class="uc-copy"><div><h3>{e(u['name'])}</h3><p>{e(u['lede'])}</p></div><a class="btn btn-glass btn-sm" href="{r}use-cases/{u['slug']}.html">Open full page <span class="arr">→</span></a></div>
+  {DEMOS[u['slug']]()}
+</div>"""
+    return f'<div class="uc-switch"><div class="uc-tabs glass-strong" role="tablist" aria-label="Live demos">{tabs}</div>{panels}</div>'
+
+def uc_card(r, u):
+    return f"""<a class="related glass-card" href="{r}use-cases/{u['slug']}.html"><b>{e(u['name'])} demo</b><span>{e(u['card'])}</span></a>"""
+
+PROCESS = """<div class="steps">
+  <div class="step glass"><div class="step-dot">1</div><h3>Discover</h3><div class="dur">About 1 week</div><p>We map the process, the data and the success metric, and agree on what to build first.</p></div>
+  <div class="step glass"><div class="step-dot">2</div><h3>Prototype</h3><div class="dur">2–3 weeks</div><p>A working prototype on your real data that proves the idea before larger spend.</p></div>
+  <div class="step glass"><div class="step-dot">3</div><h3>Build</h3><div class="dur">Two-week sprints</div><p>Production code with a demo at the end of every sprint.</p></div>
+  <div class="step glass"><div class="step-dot">4</div><h3>Integrate</h3><div class="dur">In parallel</div><p>Connections to your business systems, plus security review and user testing.</p></div>
+  <div class="step glass"><div class="step-dot">5</div><h3>Operate</h3><div class="dur">Ongoing</div><p>Monitoring, model evaluation and support, so quality holds up after launch.</p></div>
+</div>"""
+
+def contact_block(heading_tag="h2"):
+    opts = "".join(f"<option>{e(s['name'])}</option>" for s in SERVICES) + "<option>Not sure yet</option>"
+    return f"""<div class="contact">
+  <div class="contact-copy">
+    <{heading_tag}>Have a process that <em>should</em> run itself?</{heading_tag}>
+    <p>Tell us what you want to automate or build. We reply within one business day with first ideas and a proposed next step.</p>
+    <div class="mail"><code id="mail">{EMAIL}</code><button class="btn btn-glass btn-sm" id="copy" type="button">Copy email</button></div>
+  </div>
+  <form class="lead glass-strong" method="POST" action="/api/contact" novalidate data-mail="{EMAIL}">
+    <p hidden><label>Leave this empty<input name="company-website" tabindex="-1" autocomplete="off"></label></p>
+    <div class="row2">
+      <label for="f-name">Name<input id="f-name" name="name" autocomplete="name" placeholder="Jane Doe"></label>
+      <label for="f-email">Work email<input id="f-email" name="email" type="email" autocomplete="email" placeholder="jane@company.com"></label>
+    </div>
+    <label for="f-company">Company<input id="f-company" name="company" autocomplete="organization" placeholder="Acme Inc."></label>
+    <label for="f-topic">What do you need?<select id="f-topic" name="topic">{opts}</select></label>
+    <label for="f-msg">Project details<textarea id="f-msg" name="message" placeholder="What process, which systems, and what would success look like?"></textarea></label>
+    <button class="btn btn-primary" type="submit" style="justify-self:start">Send request <span class="arr">→</span></button>
+    <p class="note" id="note" role="status">We use your details only to reply to this request.</p>
+  </form>
+</div>"""
+
+def page(r, path, title, meta, active, body, schema=None, demo=False):
+    return head(r, path, title, meta, schema) + nav(r, active) + f'\n<main id="main">\n{body}\n</main>\n' + footer(r, demo)
+
+def page_hero(r, items, h1, lede, extra="", side=""):
+    solo = "" if side else " solo"
+    return f"""<header class="page-hero{solo}"><div class="wrap">
+  <div>{crumbs(r, items)}<h1>{h1}{SPG()}</h1><p class="lede">{lede}</p>{extra}</div>{side}
+</div></header>"""
+
+# --------------------------------------------------------------------------
+# Pages
+# --------------------------------------------------------------------------
+PROMPTS = [
+  dict(q="Automate our invoice approvals", title="An invoice agent that reads, matches and routes", slug="workflow-automation",
+       steps=["Read invoices from the inbox and extract line items", "Match each invoice to its purchase order and contract price", "Post clean invoices to your ERP and route exceptions to Finance"],
+       time="Prototype in 3–4 weeks"),
+  dict(q="Answer customer questions 24/7", title="A support agent that knows your orders and policies", slug="ai-agents",
+       steps=["Connect the agent to your help center, orders and CRM", "Answer routine questions and take simple actions, with sources", "Hand complex cases to your team with a summary"],
+       time="Prototype in 4–6 weeks"),
+  dict(q="Clean up our supplier data", title="One trusted record for every supplier", slug="data-management",
+       steps=["Find and merge duplicate suppliers across systems", "Fill gaps such as certificates, contacts and contract dates", "Keep the record current with automatic quality checks"],
+       time="First results in 3 weeks"),
+  dict(q="Give our technicians a mobile app", title="A field app with photo proof and offline mode", slug="mobile-apps",
+       steps=["Job lists, checklists, photos, GPS and signatures on the phone", "Works without signal and syncs when back online", "Reports flow straight into your back office"],
+       time="First release in 8–12 weeks"),
+]
+ASK_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0c.6 5.8 3.4 9.9 12 12-8.6 2.1-11.4 6.2-12 12-.6-5.8-3.4-9.9-12-12 8.6-2.1 11.4-6.2 12-12z" fill="currentColor"/></svg>'
+SEND_ICON = '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 16V4M4.5 9.5 10 4l5.5 5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+
+def answer_html(p, r=""):
+    steps = "".join(f"<li><b>Step {i+1}</b>{e(t)}</li>" for i, t in enumerate(p["steps"]))
+    return f"""<div class="answer-h"><span class="orb"></span><span>Here is how we would build it</span></div>
+<h2>{e(p['title'])}</h2><ol class="answer-steps">{steps}</ol>
+<div class="answer-foot"><span class="tag"><i></i>{e(p['time'])} · {e(SVC[p['slug']]['name'])}</span><a class="link" href="{r}services/{p['slug']}.html">See the service <span class="arr">→</span></a></div>"""
+
+def home():
+    r = ""
+    chips = "".join(f'<button type="button" data-i="{i}">{e(p["q"])}</button>' for i, p in enumerate(PROMPTS))
+    pdata = json.dumps([dict(q=p["q"], title=p["title"], steps=p["steps"], time=p["time"], slug=p["slug"], svc=SVC[p["slug"]]["name"]) for p in PROMPTS])
+    body = f"""<header class="hero"><div class="wrap">
+  <h1 class="rise">AI that works the way your <span class="soft">team</span> does{SPG()}</h1>
+  <p class="lede rise d1">SDA AI Services designs, builds and runs <b>AI agents, automation and custom software</b> for companies that want working systems in production, not slide decks.</p>
+  <div class="cta-row rise d2"><a class="btn btn-primary" href="contact.html">Book a discovery call <span class="arr">→</span></a><a class="btn btn-glass" href="use-cases/index.html">Try the live demos</a></div>
+  <div class="ask rise d3" id="prompt">
+    <form class="ask-bar" id="ask-form" role="search" aria-label="Describe what you want to automate">
+      <div class="ask-in">{ASK_ICON}<label for="ask-q" class="skip" style="position:absolute;left:-999px">What should AI do for you?</label>
+        <input id="ask-q" name="q" autocomplete="off" placeholder="What should AI do for your business?">
+        <button class="ask-go" type="submit" aria-label="Show how we would build it">{SEND_ICON}</button></div>
+    </form>
+    <div class="ask-chips">{chips}</div>
+    <div class="answer glass-strong" id="answer" aria-live="polite">{answer_html(PROMPTS[0])}</div>
+    <script type="application/json" id="ask-data">{pdata}</script>
+  </div>
+</div></header>
+
+<section class="block" id="services"><div class="wrap">
+  <div class="sec-head"><h2>Six ways we put AI to work</h2><p>Each engagement goes from first prototype to production code, with the integrations, security and monitoring an operations team needs.</p></div>
+  {bento(r)}
+</div></section>
+
+<section class="block" id="use-cases" style="padding-top:20px"><div class="wrap">
+  <div class="sec-head"><h2>Try it before you talk to us</h2><p>Six working demos of the kind of software we build. Click through them right here: they run in your browser on example data.</p></div>
+  {uc_switch(r)}
+</div></section>
+
+<section class="block" id="process" style="padding-top:20px"><div class="wrap">
+  <div class="sec-head"><h2>From idea to production in five steps</h2><p>Short cycles, working software at every checkpoint, and a fixed scope for each phase so budget and timeline stay predictable.</p></div>
+  {PROCESS}
+</div></section>
+
+<section class="block" id="stack" style="padding-top:20px"><div class="wrap">
+  <div class="sec-head"><h2>Built to last, not just to demo</h2><p>We pick models and infrastructure by cost, accuracy and data-protection needs, and we build so your team can run it.</p></div>
+  <div class="trust">
+    <div class="princ glass">
+      <div><span class="pi">{_I('<path d="M12 3 4 6v6c0 4.4 3.4 8.3 8 9 4.6-.7 8-4.6 8-9V6z"/>')}</span><h3>Enterprise experience</h3><p>Our team has delivered large enterprise projects, so we plan for security, compliance and change management from day one.</p></div>
+      <div><span class="pi">{_I('<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>')}</span><h3>Your data stays yours</h3><p>Privacy-first architecture, hosting in the environment you choose, and no training on your data without your consent.</p></div>
+      <div><span class="pi">{_I('<path d="M4 19V9M10 19V5M16 19v-6M22 19H2"/>')}</span><h3>Measured results</h3><p>Every project starts with a metric, such as hours saved or response time, and we report against it.</p></div>
+      <div><span class="pi">{_I('<path d="M8 7 3 12l5 5M16 7l5 5-5 5"/>')}</span><h3>Built to hand over</h3><p>Clean code, documentation and training, so your team can own and extend what we build.</p></div>
+    </div>
+    <div class="stackc glass"><h3>Proven tools, chosen per project</h3><p>Models, frameworks and platforms we work with every day.</p>
+      <ul class="cloud">{''.join(f'<li class="{"k" if k else ""}">{t}</li>' for t, k in [("Claude",1),("GPT",1),("Gemini",1),("Llama",0),("Mistral",0),("RAG",1),("MCP",0),("Vector databases",0),("Evals & tracing",0),("TypeScript",0),("React",0),("Next.js",0),("Python",0),("FastAPI",0),("Flutter",0),("AWS",0),("Azure",0),("Google Cloud",0),("SAP BTP",0),("Docker",0),("Kubernetes",0)])}</ul></div>
+  </div>
+</div></section>
+
+<section class="block" id="contact" style="padding-top:20px"><div class="wrap">{contact_block()}</div></section>"""
+    return page(r, "", f"{BRAND} | AI Software, Web & App Development",
+                "SDA AI Services builds AI agents, workflow automation, custom web and mobile apps, data management and enterprise integrations. From prototype to production.",
+                "home", body, [ORG_LD, {"@context": "https://schema.org", "@type": "WebSite", "name": BRAND, "url": SITE_URL + "/"}], demo=True)
+
+def services_hub():
+    r = "../"
+    body = page_hero(r, [("Home", "index.html"), ("Services", None)], "AI software and app development services",
+                     "From AI agents to enterprise integration, we cover the full path from idea to production software. Pick a service to see what we deliver, typical projects and answers to common questions.") + f"""
+<section class="block" style="padding-top:20px"><div class="wrap">{bento(r)}</div></section>
+<section class="block" style="padding-top:0"><div class="wrap">
+  <div class="sec-head"><h2>One process for every service</h2><p>Short cycles and working software at every checkpoint.</p></div>{PROCESS}
+</div></section>
+{cta_band(r)}"""
+    ld = [crumb_ld([("Home", ""), ("Services", "services/")]),
+          {"@context": "https://schema.org", "@type": "ItemList", "itemListElement": [
+              {"@type": "ListItem", "position": i + 1, "url": f"{SITE_URL}/services/{s['slug']}.html", "name": s["name"]} for i, s in enumerate(SERVICES)]}]
+    return page(r, "services/", "AI Software & App Development Services",
+                "Overview of SDA AI Services: AI agents, workflow automation, custom web apps, mobile apps, data management and enterprise integration.", "services", body, ld)
+
+def service_page(s):
+    r = "../"
+    path = f"services/{s['slug']}.html"
+    items = [("Home", "index.html"), ("Services", "services/index.html"), (s["name"], None)]
+    facts = "".join(f"<div><dt>{e(k)}</dt><dd>{e(v)}</dd></div>" for k, v in s["facts"])
+    deliver = "".join(f'<div class="glass"><h3>{SP}{e(t)}</h3><p>{e(d)}</p></div>' for t, d in s["deliver"])
+    ex = "".join(f"<li><b>{e(t)}</b><span>{e(d)}</span></li>" for t, d in s["examples"])
+    faq = "".join(f"<details><summary>{e(q)}</summary><p>{e(a)}</p></details>" for q, a in s["faq"])
+    others = [x for x in SERVICES if x["slug"] != s["slug"]][:3]
+    rel = "".join(f'<a class="glass" href="{x["slug"]}.html"><b>{e(x["name"])}</b><span>{e(x["short"])}</span></a>' for x in others)
+    u = UC[s["usecase"]]
+    extra = f'<div class="cta-row"><a class="btn btn-primary" href="{r}contact.html">Discuss your project <span class="arr">→</span></a><a class="btn btn-glass" href="{r}use-cases/{u["slug"]}.html">See the {e(u["name"])} demo</a></div>'
+    body = page_hero(r, items, e(s["h1"]).rstrip("."), e(s["lede"]), extra, f'<dl class="facts glass-strong">{facts}</dl>') + f"""
+<section class="block" style="padding-top:48px"><div class="wrap two">
+  <h2>{e(s['title'])}</h2>
+  <div class="prose">{''.join(f'<p>{e(p)}</p>' for p in s['intro'])}</div>
+</div></section>
+
+<section class="block" style="padding-top:0"><div class="wrap">
+  <div class="sec-head"><h2>What we deliver</h2><p>Choose the parts you need. We can deliver a complete solution or work alongside your own team.</p></div>
+  <div class="deliv">{deliver}</div>
+</div></section>
+
+<section class="block" style="padding-top:0"><div class="wrap two">
+  <div><h2>Where it pays off</h2><p class="intro">Examples of where companies put {e(s['name'])} to work today.</p></div>
+  <ul class="ex-list glass">{ex}</ul>
+</div></section>
+
+<section class="block" style="padding-top:0"><div class="wrap">
+  <div class="sec-head"><h2>How a project runs</h2><p>Working software at every checkpoint, so you can decide with real results in hand.</p></div>{PROCESS}
+</div></section>
+
+<section class="block" style="padding-top:0"><div class="wrap two">
+  <h2>Common questions</h2>
+  <div class="faq glass">{faq}</div>
+</div></section>
+
+<section class="block" style="padding-top:0"><div class="wrap">
+  <div class="sec-head left" style="margin-bottom:28px"><h2>Often combined with</h2></div>
+  <div class="related">{rel}</div>
+</div></section>
+{cta_band(r, f"Ready to talk about {e(s['name'])}?")}"""
+    ld = [crumb_ld([("Home", ""), ("Services", "services/"), (s["name"], path)]),
+          {"@context": "https://schema.org", "@type": "Service", "name": s["title"], "serviceType": s["name"], "description": s["meta"],
+           "provider": {"@type": "Organization", "name": BRAND, "url": SITE_URL + "/"}, "areaServed": ["Europe", "United States"], "url": f"{SITE_URL}/{path}"},
+          {"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [
+              {"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in s["faq"]]}]
+    return page(r, path, s["title"], s["meta"], "services", body, ld)
+
+def uc_hub():
+    r = "../"
+    body = page_hero(r, [("Home", "index.html"), ("Use cases", None)], "See what AI software can do for your team",
+                     "Six interactive demos of the software we build. Each runs in your browser on example data, and each can be adapted to your processes and connected to your systems.") + f"""
+<section class="block" style="padding-top:20px"><div class="wrap">{uc_switch(r)}</div></section>
+{cta_band(r, "Need something similar?", "We adapt these demos to your data, processes and systems, usually starting with a two-week prototype.")}"""
+    return page(r, "use-cases/", "AI Software Use Cases & Live Demos",
+                "Interactive AI software demos: vendor management, field service with proof of delivery, facility management, an HR tool, a furniture shop and a car dealer marketplace. See what SDA AI Services can build for you.",
+                "use-cases", body, [crumb_ld([("Home", ""), ("Use cases", "use-cases/")])], demo=True)
+
+def demo_vendor():
+    ico = lambda d: f'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{d}</svg>'
+    items = [("sup", "Suppliers", ico('<path d="M3 21h18M5 21V8l7-4 7 4v13M9 21v-6h6v6"/>')),
+             ("rfq", "RFQs", ico('<path d="M4 4h16v12H5.2L4 17.2z"/><path d="M8 9h8M8 12h5"/>')),
+             ("cmp", "Complaints", ico('<path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17h.01"/>')),
+             ("apv", "Approvals", ico('<path d="M9 12l2 2 4-4"/><rect x="3" y="3" width="18" height="18" rx="4"/>')),
+             ("dms", "Documents", ico('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>'))]
+    nav = "".join(f'<button type="button" data-v="{k}" aria-selected="{"true" if k == "sup" else "false"}">{ic}<span>{t}</span><i class="cnt" hidden></i></button>' for k, t, ic in items)
+    return f"""<div class="demo-shell" id="demo-vendor">
+  <div class="demo-top"><span class="dots"><i></i><i></i><i></i></span><span class="app">Vendor Hub</span><span class="badge">Demo · example data</span></div>
+  <div class="app-body">
+    <nav class="app-nav" aria-label="Vendor Hub sections">{nav}</nav>
+    <div class="app-main" id="v-main" aria-live="polite"></div>
+  </div>
+  <div class="d-toast" id="v-toast" role="status"></div>
+</div>"""
+
+def demo_shop():
+    cats = "".join(f'<button type="button" data-cat="{c}" aria-pressed="{"true" if c == "All" else "false"}">{c}</button>' for c in ["All", "Sofas", "Chairs", "Tables", "Lighting", "Storage", "Beds"])
+    mats = "".join(f"<option>{m}</option>" for m in ["All", "Oak", "Walnut", "Linen", "Velvet", "Metal", "Rattan"])
+    asks = "".join(f'<button type="button" data-ask>{q}</button>' for q in ["Small living room, light wood, under €1,500", "Cozy reading corner", "Home office for two, under €1,300", "Bedroom in warm walnut"])
+    return f"""<div class="demo-shell shop" id="demo-shop">
+  <div class="demo-top"><span class="dots"><i></i><i></i><i></i></span><span class="app">Loft &amp; Linden · furniture</span><span class="badge">Demo · example data</span></div>
+  <div class="shop-bar">
+    <b class="shop-brand">Loft &amp; Linden</b>
+    <input type="search" id="s-q" placeholder="Search sofas, lamps, oak…" aria-label="Search products">
+    <button type="button" class="cart-btn" id="s-cart" aria-label="Open cart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.6a2 2 0 0 0 2-1.5L21 8H6"/><circle cx="10" cy="20" r="1.3"/><circle cx="17" cy="20" r="1.3"/></svg>Cart<i id="s-cartn" hidden>0</i></button>
+  </div>
+  <div class="demo-body">
+    <form class="s-ai" id="s-ai"><label for="s-ai-q">AI room advisor</label><div class="s-ai-in"><input id="s-ai-q" placeholder="Describe your room, style and budget"><button class="btn btn-ink btn-sm" type="submit">Suggest a set</button></div>
+      <div class="qchips">{asks}</div></form>
+    <div id="s-ai-out"></div>
+    <div class="s-filters"><div class="s-cats" role="group" aria-label="Category">{cats}</div>
+      <div class="s-more"><label for="s-mat">Material<select id="s-mat">{mats}</select></label>
+      <label for="s-max">Max price <b id="s-maxv">€1,500</b><input type="range" id="s-max" min="100" max="1500" step="50" value="1500"></label>
+      <label for="s-sort">Sort<select id="s-sort"><option value="pop">Top rated</option><option value="low">Price: low to high</option><option value="high">Price: high to low</option></select></label></div></div>
+    <p class="note" id="s-count" style="margin:4px 0 12px"></p>
+    <div class="s-grid" id="s-grid"></div>
+  </div>
+  <div class="s-scrim" id="s-scrim" hidden></div>
+  <aside class="s-panel" id="s-panel" role="dialog" aria-modal="true" hidden tabindex="-1"></aside>
+  <div class="d-toast" id="s-toast" role="status"></div>
+</div>"""
+
+def demo_facility():
+    samples = ["It's really hot in meeting room B", "Water leaking under the sink in the kitchen", "Lights flickering in Office East", "Loading dock door is stuck open", "Coffee spilled in the lobby"]
+    return f"""<div class="demo-shell" id="demo-facility">
+  <div class="demo-top"><span class="dots"><i></i><i></i><i></i></span><span class="app">Facility Desk · HQ Building, Floor 1</span><span class="badge">Demo · example data</span></div>
+  <div class="demo-body">
+    <div class="kpi-row">
+      <div class="kpi"><span>Open tickets</span><b id="fk-open">2</b><small>this building</small></div>
+      <div class="kpi"><span>Critical</span><b id="fk-crit">1</b><small>response &lt; 1 h</small></div>
+      <div class="kpi"><span>Sensors online</span><b>42/42</b><small>temp · humidity · CO₂</small></div>
+      <div class="kpi"><span>Energy today</span><b>1,284</b><small>kWh, −6% vs. avg</small></div>
+    </div>
+    <div class="split">
+      <div class="panel">
+        <h3>Floor plan</h3>
+        <div id="fm-room" style="font-size:13.5px;color:var(--dim);margin-top:4px">Click a room for details. Temperatures update live.</div>
+        <div class="fplan" id="fplan"></div>
+        <div class="legend"><span><i style="background:var(--cobalt-soft);border-color:#D3DDFB"></i>Normal</span><span><i style="background:var(--warn-soft);border-color:#F3D7A6"></i>Attention</span><span><i style="background:var(--bad-soft);border-color:#F2C2C9"></i>Urgent ticket</span></div>
+        <h4>Predictive maintenance</h4>
+        <div class="asset"><div>Chiller unit CH-02<small>Compressor vibration rising, service in 9 days</small></div><div class="meter"><i><b style="width:58%;background:var(--warn)"></b></i>58%</div></div>
+        <div class="asset"><div>Elevator EL-01<small>Door motor cycles normal</small></div><div class="meter"><i><b style="width:91%;background:var(--ok)"></b></i>91%</div></div>
+        <div class="asset"><div>Server room CRAC unit<small>Running at 96% load, check filter</small></div><div class="meter"><i><b style="width:34%;background:var(--bad)"></b></i>34%</div></div>
+      </div>
+      <div class="panel">
+        <h3>Report an issue</h3>
+        <label for="fm-text" style="margin-top:12px">Describe the problem<textarea id="fm-text" placeholder="e.g. Water leaking under the sink in the kitchen"></textarea></label>
+        <div class="samples">{''.join(f'<button type="button" data-sample="{e(x)}">{e(x)}</button>' for x in samples)}</div>
+        <div class="btn-row"><button class="btn btn-ink btn-sm" id="fm-go" type="button">Triage with AI</button></div>
+        <div class="ai-box"><div class="ai-h">AI triage</div><div id="fm-ai"><p>Type an issue or pick an example. The assistant sets location, category, priority and team.</p></div></div>
+        <h4>Ticket queue</h4>
+        <div id="fm-list"></div>
+      </div>
+    </div>
+  </div>
+</div>"""
+
+def demo_hr():
+    qs = ["How many vacation days do I get?", "Can I work from home?", "When do I need a sick note?", "How do I claim travel expenses?"]
+    return f"""<div class="demo-shell" id="demo-hr">
+  <div class="demo-top"><span class="dots"><i></i><i></i><i></i></span><span class="app">People Desk</span><span class="badge">Demo · example data</span></div>
+  <div class="demo-body">
+    <div class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" aria-controls="t-rec" id="tb-rec">Recruiting</button>
+      <button role="tab" aria-selected="false" aria-controls="t-leave" id="tb-leave">Leave &amp; absence</button>
+      <button role="tab" aria-selected="false" aria-controls="t-ask" id="tb-ask">HR assistant</button>
+    </div>
+    <div id="t-rec" role="tabpanel" aria-labelledby="tb-rec">
+      <div class="toolbar"><label for="role" style="flex-direction:row;display:flex;align-items:center;gap:10px">Open role<select id="role"><option value="fe">Frontend Engineer</option><option value="sm">Sales Manager EMEA</option></select></label><span class="note">Scores compare each CV with the job profile.</span></div>
+      <div class="split" style="grid-template-columns:1.25fr 1fr">
+        <div class="kanban" id="kanban"></div>
+        <aside class="panel" id="cand-detail" aria-live="polite"></aside>
+      </div>
+    </div>
+    <div id="t-leave" role="tabpanel" aria-labelledby="tb-leave" hidden>
+      <div class="split">
+        <div class="panel"><h3>Pending requests</h3><p class="note" style="margin-top:4px">Team: Customer Success · minimum staffing 3 people</p><div id="leave-list"></div></div>
+        <div class="panel"><h3>Team calendar</h3><div style="overflow-x:auto"><div class="cal" id="cal"></div></div>
+          <div class="legend"><span><i style="background:var(--cobalt);border-color:var(--cobalt)"></i>Approved</span><span><i style="background:var(--signal);border-color:var(--signal)"></i>Pending</span></div></div>
+      </div>
+    </div>
+    <div id="t-ask" role="tabpanel" aria-labelledby="tb-ask" hidden>
+      <div class="panel" style="max-width:760px">
+        <div class="chat" id="chat" aria-live="polite"></div>
+        <div class="qchips">{''.join(f'<button type="button" data-q="{e(q)}">{e(q)}</button>' for q in qs)}</div>
+        <div class="chat-in"><input id="ask" placeholder="Ask an HR question" aria-label="Ask an HR question"><button class="btn btn-ink btn-sm" id="ask-go" type="button">Ask</button></div>
+      </div>
+    </div>
+  </div>
+</div>"""
+
+def demo_field():
+    return """<div class="demo-shell field" id="demo-field">
+  <div class="demo-top"><span class="dots"><i></i><i></i><i></i></span><span class="app">FieldProof · technician app + office</span><span class="badge">Demo · example data</span></div>
+  <div class="field-body">
+    <div class="phone-wrap"><div class="phone" id="f-phone" aria-live="polite"></div><p class="note" style="text-align:center;margin-top:10px">Technician app</p></div>
+    <div class="f-office" id="f-office" aria-live="polite"></div>
+  </div>
+  <div class="d-toast" id="f-toast" role="status"></div>
+</div>"""
+
+def demo_car():
+    makes = "".join(f"<option>{m}</option>" for m in ["All", "Audi", "BMW", "Ford", "Hyundai", "Mercedes-Benz", "Skoda", "Tesla", "Toyota", "Volkswagen", "Volvo"])
+    bodies = "".join(f'<button type="button" data-body="{b}" aria-pressed="{"true" if b == "All" else "false"}">{b}</button>' for b in ["All", "SUV", "Sedan", "Estate", "Hatchback"])
+    asks = "".join(f'<button type="button" data-ask>{q}</button>' for q in ["Family SUV, electric, under €40,000", "First car for a student, under €15,000", "Estate with a big boot, diesel", "Almost new hybrid, low mileage"])
+    return f"""<div class="demo-shell cardealer" id="demo-car">
+  <div class="demo-top"><span class="dots"><i></i><i></i><i></i></span><span class="app">Northline Motors · used cars</span><span class="badge">Demo · example data</span></div>
+  <div class="shop-bar"><b class="shop-brand">Northline Motors</b>
+    <button type="button" class="cart-btn" id="c-trade">Value my car</button>
+    <button type="button" class="cart-btn" id="c-savedbtn">Saved <i id="c-savedn">0</i></button>
+    <button type="button" class="cart-btn" id="c-cmpbtn" disabled>Compare <i id="c-cmpn">0</i></button></div>
+  <div class="demo-body">
+    <form class="s-ai" id="c-ai"><label for="c-ai-q">AI car finder</label><div class="s-ai-in"><input id="c-ai-q" placeholder="Describe the car you need and your budget"><button class="btn btn-ink btn-sm" type="submit">Find cars</button></div><div class="qchips">{asks}</div></form>
+    <div id="c-ai-out" style="margin-top:12px"></div>
+    <div class="s-filters"><div class="s-cats" role="group" aria-label="Body type">{bodies}</div>
+      <div class="s-more"><label for="c-make">Make<select id="c-make">{makes}</select></label>
+      <label for="c-fuel">Fuel<select id="c-fuel"><option>All</option><option>Electric</option><option>Hybrid</option><option>Petrol</option><option>Diesel</option></select></label>
+      <label for="c-max">Max price <b id="c-maxv">€45,000</b><input type="range" id="c-max" min="10000" max="45000" step="1000" value="45000"></label>
+      <label for="c-km">Max mileage <b id="c-kmv">100,000 km</b><input type="range" id="c-km" min="10000" max="100000" step="5000" value="100000"></label>
+      <label for="c-sort">Sort<select id="c-sort"><option value="best">Best value</option><option value="low">Lowest price</option><option value="km">Lowest mileage</option><option value="new">Newest</option></select></label>
+      <button type="button" class="btn btn-ghost btn-sm" id="c-reset">Reset</button></div></div>
+    <p class="note" id="c-count" style="margin:4px 0 12px"></p>
+    <div class="s-grid" id="c-grid"></div>
+  </div>
+  <div class="s-scrim" id="c-scrim" hidden></div>
+  <aside class="s-panel" id="c-panel" role="dialog" aria-modal="true" hidden tabindex="-1"></aside>
+  <div class="d-toast" id="c-toast" role="status"></div>
+</div>"""
+
+DEMOS = {"vendor-management": demo_vendor, "field-service": demo_field, "facility-management": demo_facility, "hr-tool": demo_hr, "furniture-shop": demo_shop, "car-marketplace": demo_car}
+
+def uc_page(u):
+    r = "../"
+    path = f"use-cases/{u['slug']}.html"
+    items = [("Home", "index.html"), ("Use cases", "use-cases/index.html"), (u["name"], None)]
+    how = '<div class="howto">' + "".join(f'<div class="glass"><b>{e(t)}</b><span>{e(d)}</span></div>' for t, d in u["how"]) + "</div>"
+    rel = "".join(f'<a class="glass" href="{r}services/{k}.html"><b>{e(SVC[k]["name"])}</b><span>{e(SVC[k]["short"])}</span></a>' for k in u["services"])
+    others = "".join(f'<a class="glass" href="{r}use-cases/{x["slug"]}.html"><b>{e(x["name"])} demo</b><span>{e(x["card"])}</span></a>' for x in USE_CASES if x["slug"] != u["slug"])
+    body = page_hero(r, items, e(u["h1"]).rstrip("."), e(u["lede"]), how) + f"""
+<section class="demo-stage"><div class="wrap">{DEMOS[u['slug']]()}
+  <p class="note" style="margin-top:16px">This demo runs in your browser with fictional example data. In a real project it connects to your systems and uses a language model for the AI steps.</p>
+</div></section>
+<section class="block" style="padding-top:20px"><div class="wrap">
+  <div class="sec-head left" style="margin-bottom:28px"><h2>Services behind this demo</h2><p>We combine these services to build solutions like this one around your processes.</p></div>
+  <div class="related">{rel}</div>
+</div></section>
+<section class="block" style="padding-top:0"><div class="wrap">
+  <div class="sec-head left" style="margin-bottom:28px"><h2>More demos</h2></div>
+  <div class="related" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">{others}</div>
+</div></section>
+{cta_band(r, f"Want this for your {e(u['label'].lower())} team?", "We adapt the demo to your data and systems, usually starting with a two-week prototype.")}"""
+    ld = [crumb_ld([("Home", ""), ("Use cases", "use-cases/"), (u["name"], path)]),
+          {"@context": "https://schema.org", "@type": "SoftwareApplication", "name": f"{u['name']} demo", "applicationCategory": "BusinessApplication",
+           "operatingSystem": "Web", "description": u["meta"], "url": f"{SITE_URL}/{path}", "creator": {"@type": "Organization", "name": BRAND}}]
+    return page(r, path, u["title"], u["meta"], "use-cases", body, ld, demo=True)
+
+def contact():
+    r = ""
+    body = f"""<section class="block" style="padding-top:64px"><div class="wrap">{crumbs(r, [("Home", "index.html"), ("Contact", None)])}{contact_block("h1")}</div></section>"""
+    return page(r, "contact.html", "Contact SDA AI Services",
+                "Talk to SDA AI Services about your AI, web or app project. We reply within one business day with first ideas and a next step.",
+                "contact", body, [ORG_LD])
+
+
+def simple_page(path, title, meta, h1, body_html, noindex=False):
+    r = ""
+    hdr = page_hero(r, [("Home", "index.html"), (title, None)], h1, meta)
+    body = hdr + f'<section class="block" style="padding-top:12px"><div class="wrap"><div class="prose legal glass">{body_html}</div></div></section>'
+    html_ = page(r, path, title, meta, "", body)
+    if noindex:
+        html_ = html_.replace('<meta name="description"', '<meta name="robots" content="noindex">\n<meta name="description"', 1)
+    return html_
+
+# NOTE: legal texts are templates. Replace every [bracketed] value and have them reviewed before going live.
+def privacy():
+    return simple_page("privacy.html", "Privacy policy", "How SDA AI Services handles personal data on this website.", "Privacy policy", f"""
+<p><b>Last updated:</b> [date]</p>
+<h2>Who is responsible</h2><p>[Company legal name], [street], [postal code] [city], [country]. Email: {EMAIL}.</p>
+<h2>Data we process</h2><p>When you visit this website, our hosting provider processes technical data such as your IP address, browser type and the pages you request. This is necessary to deliver the website securely (legitimate interest).</p>
+<p>When you send the contact form, we process your name, email address, company and message to answer your request. We delete this data when it is no longer needed for that purpose, unless we must keep it by law.</p>
+<h2>Demos on this website</h2><p>The interactive demos run entirely in your browser. Text, photos and signatures you enter in a demo are not sent to us or stored.</p>
+<h2>Service providers</h2><p>Hosting: [hosting provider and location]. Web fonts: Google Fonts (Google Ireland Ltd.); your browser connects to Google servers to load the fonts. [List any analytics or other tools here, or state that none are used.]</p>
+<h2>Your rights</h2><p>You can request access to, correction or deletion of your data, restrict or object to processing, and receive your data in a portable format. You can also complain to a data protection authority. Contact us at {EMAIL}.</p>""")
+
+def legal():
+    return simple_page("legal-notice.html", "Legal notice", "Company information for SDA AI Services.", "Legal notice", f"""
+<h2>Company</h2><p>[Company legal name]<br>[Street and number]<br>[Postal code, city]<br>[Country]</p>
+<h2>Contact</h2><p>Email: {EMAIL}<br>Phone: [phone number]</p>
+<h2>Registration</h2><p>Registered at [court or registry], number [registration number]<br>VAT ID: [VAT number]</p>
+<h2>Represented by</h2><p>[Managing director name]</p>""")
+
+def thanks():
+    return simple_page("thanks.html", "Thank you", "We received your request.", "Thanks, we received your request",
+        '<p>We reply within one business day with first ideas and a proposed next step.</p><p><a class="btn btn-primary" href="index.html">Back to the homepage <span class="arr">→</span></a></p>', noindex=True)
+
+def not_found():
+    return simple_page("404.html", "Page not found", "This page does not exist.", "This page does not exist",
+        '<p>The link may be old or mistyped. Try one of these instead:</p><p><a class="link" href="/index.html">Homepage</a> · <a class="link" href="/services/index.html">Services</a> · <a class="link" href="/use-cases/index.html">Live demos</a> · <a class="link" href="/contact.html">Contact</a></p>', noindex=True)
+
+# --------------------------------------------------------------------------
+# Build
+# --------------------------------------------------------------------------
+def standalone(fragment):
+    """Wrap a page fragment into a complete HTML document for hosting."""
+    head_part, _, rest = fragment.partition('<a class="skip"')
+    return ('<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
+            '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
+            + head_part + '</head>\n<body>\n<a class="skip"' + rest + '\n</body>\n</html>\n')
+
+def main():
+    if OUT.exists():
+        shutil.rmtree(OUT)
+    (OUT / "assets").mkdir(parents=True)
+    for f in (ROOT / "src" / "assets").iterdir():
+        if f.is_dir():
+            shutil.copytree(f, OUT / "assets" / f.name)
+        else:
+            shutil.copy(f, OUT / "assets" / f.name)
+    pages = {"index.html": home(), "contact.html": contact(), "services/index.html": services_hub(), "use-cases/index.html": uc_hub(),
+             "privacy.html": privacy(), "legal-notice.html": legal(), "thanks.html": thanks(), "404.html": not_found()}
+    for s in SERVICES:
+        pages[f"services/{s['slug']}.html"] = service_page(s)
+    for u in USE_CASES:
+        pages[f"use-cases/{u['slug']}.html"] = uc_page(u)
+    for p, frag in pages.items():
+        out = OUT / p
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(standalone(frag), encoding="utf-8")
+    # preview entry for the claude.ai artifact (skeleton is added by the host)
+    (ROOT / "preview.html").write_text(pages["index.html"], encoding="utf-8")
+    urls = "".join(f"  <url><loc>{SITE_URL}/{'' if p == 'index.html' else p}</loc></url>\n" for p in pages if p not in ("404.html", "thanks.html"))
+    (OUT / "sitemap.xml").write_text(f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n{urls}</urlset>\n')
+    shutil.copy(ROOT / "src" / "_headers", OUT / "_headers")
+    (OUT / "robots.txt").write_text(f"User-agent: *\nAllow: /\nSitemap: {SITE_URL}/sitemap.xml\n")
+    (OUT / "site.webmanifest").write_text(json.dumps({"name": BRAND, "short_name": "SDA AI", "start_url": "/", "display": "standalone",
+        "background_color": "#F7F9F9", "theme_color": "#0D7270", "icons": [
+            {"src": "/assets/brand/icon-192.png", "sizes": "192x192", "type": "image/png"},
+            {"src": "/assets/brand/icon-512.png", "sizes": "512x512", "type": "image/png"}]}, indent=2))
+    print(f"Built {len(pages)} pages into {OUT}")
+
+if __name__ == "__main__":
+    main()
