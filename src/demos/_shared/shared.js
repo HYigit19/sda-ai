@@ -273,7 +273,7 @@
       var n = opts.steps.filter(function (s) { return done[s.id]; }).length, all = n === opts.steps.length;
       el.innerHTML = '<div class="sda-guide-h"><span class="sda-guide-k">' + ICON.spark + 'Try it yourself</span><b>' + esc(opts.title) + '</b><span class="sda-guide-n">' + n + ' / ' + opts.steps.length + '</span>' +
         '<button type="button" class="sda-reset" data-reset>' + ICON.reset + 'Reset demo</button></div>' +
-        '<ol class="sda-steps">' + opts.steps.map(function (s, i) { return '<li class="' + (done[s.id] ? 'ok' : '') + '"><span class="sda-step-d">' + (done[s.id] ? ICON.check : (i + 1)) + '</span>' + s.text + '</li>'; }).join('') + '</ol>' +
+        '<ol class="sda-steps">' + opts.steps.map(function (s, i) { return '<li class="' + (done[s.id] ? 'ok' : '') + '"><span class="sda-step-d">' + (done[s.id] ? ICON.check : (i + 1)) + '</span><span class="sda-step-t">' + s.text + '</span></li>'; }).join('') + '</ol>' +
         (all ? '<div class="sda-guide-done">' + ICON.check + '<span><b>Done. That is the whole flow.</b> We build this around your processes and systems.</span>' + (opts.cta ? '<a class="btn btn-primary btn-sm" href="' + opts.cta.href + '">' + esc(opts.cta.text) + ' <span class="arr">→</span></a>' : '') + '</div>' : '');
     }
     el.addEventListener('click', function (e) { if (e.target.closest('[data-reset]') && opts.demoId) reset(opts.demoId); });

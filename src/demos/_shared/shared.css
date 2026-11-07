@@ -133,3 +133,6 @@
 .sda-photo{margin:0}
 .sda-photo img{display:block;width:100%;border-radius:12px}
 .sda-photo figcaption{font-size:12.5px;color:var(--dim);margin-top:8px}
+
+/* tables inside previews and dialogs must not inherit the site's 640px table minimum */
+.sda-page table,.sda-modal table,.sda-dms table,.demo-shell .sda-prev table{min-width:0}
