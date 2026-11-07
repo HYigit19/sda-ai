@@ -15,7 +15,7 @@ ROOT = Path(__file__).parent
 # Cache-busting: a short hash of the CSS and JS goes into every asset URL,
 # so browsers fetch new files right after each deploy.
 import hashlib as _hl
-ASSET_V = _hl.sha1(b"".join((ROOT / "src" / "assets" / n).read_bytes() for n in ("style.css", "main.js", "demos.js"))).hexdigest()[:8]
+ASSET_V = _hl.sha1(b"".join(p.read_bytes() for p in sorted([*(ROOT / "src" / "assets").glob("*.css"), *(ROOT / "src" / "assets").glob("*.js"), *(ROOT / "src" / "demos").rglob("*.*")]) if p.suffix in (".css", ".js", ".py"))).hexdigest()[:8]
 OUT = ROOT / "site"
 
 e = html.escape
@@ -186,40 +186,18 @@ SERVICES = [
     usecase="vendor-management"),
 ]
 
-USE_CASES = [
-  dict(slug="vendor-management", name="Vendor management", label="Procurement",
-    title="AI Vendor Management Software Demo: RFQs, Complaints, Workflows & DMS",
-    meta="Try an interactive AI vendor management demo: supplier risk scoring, RFQs with quote comparison, supplier complaints and 8D, approval workflows and a document management system.",
-    h1="Vendor management, from RFQ to complaint.",
-    lede="One app for the whole supplier lifecycle: score risks, send RFQs and compare quotes, handle complaints with 8D, run approvals, and keep every certificate and contract on file.",
-    card="Supplier risk, RFQs, complaints, approval workflows and documents in one app.",
-    how=[("Send an RFQ", "Open RFQs, invite suppliers, let AI draft the text, then watch quotes arrive and compare them."), ("Handle a complaint", "Log a defect, let AI classify it, send the 8D request and close it when the root cause comes back."), ("Approve and file", "Award a quote through the approval workflow and upload documents that AI files automatically.")],
-    services=["web-applications", "workflow-automation", "data-management"]),
-  dict(slug="field-service", name="Field service & proof of delivery", label="Field teams",
-    title="Field Service App Demo: GPS Check-in, Photos & Proof of Delivery",
-    meta="Try an interactive field service app demo: technicians check in on a map, take photos, collect a customer signature and send proof of delivery or service to the office in real time.",
-    h1="Proof of delivery and service, straight from the field.",
-    lede="Drivers and technicians mark their location, take photos, tick off the checklist and collect a signature. The office sees every job live on the map, with a verified proof for each one.",
-    card="GPS check-in, photos, signatures and live proof of delivery or service.",
-    how=[("Start a job", "Pick a job in the technician app and start the route. The van moves on the office map."), ("Check in and take photos", "Tap the map or use your device location, then take or add photos."), ("Sign and send", "Tick the checklist, let the customer sign, and see the proof arrive in the office.")],
-    services=["mobile-apps", "workflow-automation", "web-applications"]),
-  dict(slug="facility-management", name="Facility management", label="Facilities",
-    title="AI Facility Management Software Demo",
-    meta="Try an interactive AI facility management demo: live floor plan with sensors, AI ticket triage and predictive maintenance.",
-    h1="Facility management that triages itself.",
-    lede="Report a problem in plain language. AI finds the location, sets the priority and assigns the right team, while sensors and maintenance forecasts keep the building running.",
-    card="Live floor plan, AI ticket triage and predictive maintenance for buildings.",
-    how=[("Report an issue", "Type a problem in plain language or pick one of the examples."), ("Watch the triage", "AI sets category, priority, location and team, and the ticket appears on the plan."), ("Close the loop", "Dispatch the team or mark tickets resolved, and click rooms for live temperatures.")],
-    services=["workflow-automation", "mobile-apps", "data-management"]),
-  dict(slug="hr-tool", name="HR tool", label="People",
-    title="AI HR Software Demo: Recruiting, Leave & HR Assistant",
-    meta="Try an interactive AI HR tool demo: candidate matching, leave approvals with coverage checks and an HR assistant that answers from your handbook.",
-    h1="An HR tool that does the busywork.",
-    lede="Match candidates to the job profile, approve leave with an automatic coverage check, and let employees get answers from the handbook any time.",
-    card="Candidate matching, leave approvals with coverage checks and an HR assistant.",
-    how=[("Review candidates", "Open a candidate to see the skill match and suggested interview questions."), ("Approve leave", "The coverage check warns you before the team is short-staffed."), ("Ask the assistant", "Employees get policy answers with the source section.")],
-    services=["ai-agents", "workflow-automation", "web-applications"]),
-]
+# Demos live in src/demos/<slug>/ (meta.py: page content, markup.py: HTML, demo.js, demo.css).
+# The order here is the order on the site.
+import importlib.util as _ilu
+DEMO_DIR = ROOT / "src" / "demos"
+DEMO_ORDER = ["vendor-management", "field-service", "facility-management", "hr-tool"]
+def _load(slug, name):
+    spec = _ilu.spec_from_file_location(f"demo_{slug.replace('-', '_')}_{name}", DEMO_DIR / slug / f"{name}.py")
+    mod = _ilu.module_from_spec(spec); spec.loader.exec_module(mod); return mod
+USE_CASES, UC_ICONS, DEMOS = [], {}, {}
+for _slug in DEMO_ORDER:
+    _meta = _load(_slug, "meta")
+    USE_CASES.append(_meta.USE_CASE); UC_ICONS[_slug] = _meta.ICON; DEMOS[_slug] = _load(_slug, "markup").markup
 IND_ICON = lambda d: f'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">{d}</svg>'
 INDUSTRIES = [
   dict(slug="manufacturing", name="Manufacturing",
@@ -252,12 +230,6 @@ def industries_block(r):
     cards = "".join(f"""<article class="ind glass" id="ind-{i['slug']}"><span class="ind-ic" aria-hidden="true">{i['icon']}</span><h3>{e(i['name'])}</h3><p>{e(i['line'])}</p><div class="ind-links">{"".join(f'<a href="{r}{h}">{e(t)} <span class="arr">→</span></a>' for t, h in i['links'])}</div></article>""" for i in INDUSTRIES)
     return f"""<div class="sec-head"><h2>Built for your industry</h2><p>The same building blocks, shaped around the processes, data and rules of your sector.</p></div><div class="inds">{cards}</div>"""
 
-UC_ICONS = {
-  "vendor-management": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-5 9 5-9 5-9-5z"/><path d="M3 9v6l9 5 9-5V9M12 14v6"/></svg>',
-  "field-service": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>',
-  "facility-management": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V5l8-3v19M12 9h8v12M7.5 8h1M7.5 12h1M7.5 16h1M15.5 13h1M15.5 17h1M2 21h20"/></svg>',
-  "hr-tool": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c.6-3.4 3-5.4 6-5.4s5.4 2 6 5.4"/><circle cx="17.5" cy="9.5" r="2.4"/><path d="M16.5 14.6c2.3.3 4 1.9 4.5 4.6"/></svg>',
-}
 SVC = {s["slug"]: s for s in SERVICES}
 UC = {u["slug"]: u for u in USE_CASES}
 # --------------------------------------------------------------------------
@@ -282,7 +254,7 @@ FAVICON = "data:image/svg+xml," + ("<svg xmlns='http://www.w3.org/2000/svg' view
 def logo(r):
     return f'<a class="logo" href="{r}index.html"><img src="{r}assets/brand/logo.svg" alt="{BRAND}" width="135" height="40"></a>'
 
-def head(r, path, title, meta, schema=None):
+def head(r, path, title, meta, schema=None, demo=False):
     url = SITE_URL + "/" + path
     full_title = title if title.endswith(BRAND) else f"{title} | {BRAND}"
     ld = ""
@@ -310,7 +282,7 @@ def head(r, path, title, meta, schema=None):
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="{r}assets/style.css?v={ASSET_V}">
+<link rel="stylesheet" href="{r}assets/style.css?v={ASSET_V}">{chr(10) + f'<link rel="stylesheet" href="{r}assets/demos.css?v={ASSET_V}">' if demo else ""}
 {ld}"""
 
 BURGER = '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 6.5h14M3 13.5h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>'
@@ -415,22 +387,6 @@ def svc_card(r, s, i):
   <h3>{e(s['name'])}</h3><p>{e(s['short'])}</p>
   <span class="link">Learn more <span class="arr">→</span></span></a>"""
 
-def _mrow(n, w, col, pill_cls, t):
-    return f'<div class="mini-row"><span>{n}</span><span class="mini-bar"><i style="width:{w}%;background:{col}"></i></span><span class="mini-pill {pill_cls}">{t}</span></div>'
-
-def _mai(t):
-    return f'<div class="mini-ai">{SPARK}<span>{t}</span></div>'
-
-MINI = {
-  "vendor-management": '<div class="mini"><div class="mini-top">Vendor Hub</div>' + "".join(_mrow(*x) for x in [
-      ("Nordwerk Metals", 97, "var(--ok)", "p-ok", "Low"), ("Kestrel Electronics", 79, "var(--bad)", "p-bad", "High"),
-      ("Baltic Polymers", 88, "var(--warn)", "p-warn", "Medium"), ("Corvex Packaging", 98, "var(--ok)", "p-ok", "Low")])
-      + _mai("Kestrel: on-time delivery 79% and 61% of category spend. Qualify a second source.") + "</div>",
-  "facility-management": '<div class="mini"><div class="mini-top">Facility Desk</div><div class="mini-floor"><div></div><div></div><div class="w"></div><div></div><div></div><div class="x"></div><div></div><div></div><div></div><div></div><div class="w"></div><div></div></div>'
-      + _mai("“Water leaking in the kitchen” → Plumbing · High · today") + "</div>",
-  "hr-tool": '<div class="mini"><div class="mini-top">People Desk</div><div class="mini-kan"><div><i class="s"></i><i></i><i></i></div><div><i></i><i class="s"></i></div><div><i></i><i></i></div><div><i class="s"></i></div></div>'
-      + _mai("Lisa Miller: 96% match. Suggested question on testing strategy.") + "</div>",
-}
 
 def uc_switch(r):
     tabs = "".join(f'<button type="button" role="tab" id="uct-{u["slug"]}" aria-controls="ucp-{u["slug"]}" aria-selected="{"true" if i == 0 else "false"}"{"" if i == 0 else " tabindex=\"-1\""}><span class="uct-ic" aria-hidden="true">{UC_ICONS[u["slug"]]}</span><span class="uct-tx"><b>{e(u["name"])}</b><small>{e(u["label"])}</small></span></button>' for i, u in enumerate(USE_CASES))
@@ -476,7 +432,7 @@ def contact_block(heading_tag="h2"):
 </div>"""
 
 def page(r, path, title, meta, active, body, schema=None, demo=False):
-    return head(r, path, title, meta, schema) + nav(r, active) + f'\n<main id="main">\n{body}\n</main>\n' + footer(r, demo)
+    return head(r, path, title, meta, schema, demo) + nav(r, active) + f'\n<main id="main">\n{body}\n</main>\n' + footer(r, demo)
 
 def page_hero(r, items, h1, lede, extra="", side=""):
     solo = "" if side else " solo"
@@ -642,103 +598,6 @@ def uc_hub():
                 "Interactive AI software demos: vendor management, field service with proof of delivery, facility management, and an HR tool. See what SDA AI Services can build for you.",
                 "use-cases", body, [crumb_ld([("Home", ""), ("Use cases", "use-cases/")])], demo=True)
 
-def demo_vendor():
-    ico = lambda d: f'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{d}</svg>'
-    items = [("sup", "Suppliers", ico('<path d="M3 21h18M5 21V8l7-4 7 4v13M9 21v-6h6v6"/>')),
-             ("rfq", "RFQs", ico('<path d="M4 4h16v12H5.2L4 17.2z"/><path d="M8 9h8M8 12h5"/>')),
-             ("cmp", "Complaints", ico('<path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17h.01"/>')),
-             ("apv", "Approvals", ico('<path d="M9 12l2 2 4-4"/><rect x="3" y="3" width="18" height="18" rx="4"/>')),
-             ("dms", "Documents", ico('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>'))]
-    nav = "".join(f'<button type="button" data-v="{k}" aria-selected="{"true" if k == "sup" else "false"}">{ic}<span>{t}</span><i class="cnt" hidden></i></button>' for k, t, ic in items)
-    return f"""<div class="demo-shell" id="demo-vendor">
-  <div class="demo-top"><span class="dots"><i></i><i></i><i></i></span><span class="app">Vendor Hub</span><span class="badge">Demo · example data</span></div>
-  <div class="app-body">
-    <nav class="app-nav" aria-label="Vendor Hub sections">{nav}</nav>
-    <div class="app-main" id="v-main" aria-live="polite"></div>
-  </div>
-  <div class="d-toast" id="v-toast" role="status"></div>
-</div>"""
-
-def demo_facility():
-    samples = ["It's really hot in meeting room B", "Water leaking under the sink in the kitchen", "Lights flickering in Office East", "Loading dock door is stuck open", "Coffee spilled in the lobby"]
-    return f"""<div class="demo-shell" id="demo-facility">
-  <div class="demo-top"><span class="dots"><i></i><i></i><i></i></span><span class="app">Facility Desk · HQ Building, Floor 1</span><span class="badge">Demo · example data</span></div>
-  <div class="demo-body">
-    <div class="kpi-row">
-      <div class="kpi"><span>Open tickets</span><b id="fk-open">2</b><small>this building</small></div>
-      <div class="kpi"><span>Critical</span><b id="fk-crit">1</b><small>response &lt; 1 h</small></div>
-      <div class="kpi"><span>Sensors online</span><b>42/42</b><small>temp · humidity · CO₂</small></div>
-      <div class="kpi"><span>Energy today</span><b>1,284</b><small>kWh, −6% vs. avg</small></div>
-    </div>
-    <div class="split">
-      <div class="panel">
-        <h3>Floor plan</h3>
-        <div id="fm-room" style="font-size:13.5px;color:var(--dim);margin-top:4px">Click a room for details. Temperatures update live.</div>
-        <div class="fplan" id="fplan"></div>
-        <div class="legend"><span><i style="background:var(--cobalt-soft);border-color:#D3DDFB"></i>Normal</span><span><i style="background:var(--warn-soft);border-color:#F3D7A6"></i>Attention</span><span><i style="background:var(--bad-soft);border-color:#F2C2C9"></i>Urgent ticket</span></div>
-        <h4>Predictive maintenance</h4>
-        <div class="asset"><div>Chiller unit CH-02<small>Compressor vibration rising, service in 9 days</small></div><div class="meter"><i><b style="width:58%;background:var(--warn)"></b></i>58%</div></div>
-        <div class="asset"><div>Elevator EL-01<small>Door motor cycles normal</small></div><div class="meter"><i><b style="width:91%;background:var(--ok)"></b></i>91%</div></div>
-        <div class="asset"><div>Server room CRAC unit<small>Running at 96% load, check filter</small></div><div class="meter"><i><b style="width:34%;background:var(--bad)"></b></i>34%</div></div>
-      </div>
-      <div class="panel">
-        <h3>Report an issue</h3>
-        <label for="fm-text" style="margin-top:12px">Describe the problem<textarea id="fm-text" placeholder="e.g. Water leaking under the sink in the kitchen"></textarea></label>
-        <div class="samples">{''.join(f'<button type="button" data-sample="{e(x)}">{e(x)}</button>' for x in samples)}</div>
-        <div class="btn-row"><button class="btn btn-ink btn-sm" id="fm-go" type="button">Triage with AI</button></div>
-        <div class="ai-box"><div class="ai-h">AI triage</div><div id="fm-ai"><p>Type an issue or pick an example. The assistant sets location, category, priority and team.</p></div></div>
-        <h4>Ticket queue</h4>
-        <div id="fm-list"></div>
-      </div>
-    </div>
-  </div>
-</div>"""
-
-def demo_hr():
-    qs = ["How many vacation days do I get?", "Can I work from home?", "When do I need a sick note?", "How do I claim travel expenses?"]
-    return f"""<div class="demo-shell" id="demo-hr">
-  <div class="demo-top"><span class="dots"><i></i><i></i><i></i></span><span class="app">People Desk</span><span class="badge">Demo · example data</span></div>
-  <div class="demo-body">
-    <div class="tabs" role="tablist">
-      <button role="tab" aria-selected="true" aria-controls="t-rec" id="tb-rec">Recruiting</button>
-      <button role="tab" aria-selected="false" aria-controls="t-leave" id="tb-leave">Leave &amp; absence</button>
-      <button role="tab" aria-selected="false" aria-controls="t-ask" id="tb-ask">HR assistant</button>
-    </div>
-    <div id="t-rec" role="tabpanel" aria-labelledby="tb-rec">
-      <div class="toolbar"><label for="role" style="flex-direction:row;display:flex;align-items:center;gap:10px">Open role<select id="role"><option value="fe">Frontend Engineer</option><option value="sm">Sales Manager EMEA</option></select></label><span class="note">Scores compare each CV with the job profile.</span></div>
-      <div class="split" style="grid-template-columns:1.25fr 1fr">
-        <div class="kanban" id="kanban"></div>
-        <aside class="panel" id="cand-detail" aria-live="polite"></aside>
-      </div>
-    </div>
-    <div id="t-leave" role="tabpanel" aria-labelledby="tb-leave" hidden>
-      <div class="split">
-        <div class="panel"><h3>Pending requests</h3><p class="note" style="margin-top:4px">Team: Customer Success · minimum staffing 3 people</p><div id="leave-list"></div></div>
-        <div class="panel"><h3>Team calendar</h3><div style="overflow-x:auto"><div class="cal" id="cal"></div></div>
-          <div class="legend"><span><i style="background:var(--cobalt);border-color:var(--cobalt)"></i>Approved</span><span><i style="background:var(--signal);border-color:var(--signal)"></i>Pending</span></div></div>
-      </div>
-    </div>
-    <div id="t-ask" role="tabpanel" aria-labelledby="tb-ask" hidden>
-      <div class="panel" style="max-width:760px">
-        <div class="chat" id="chat" aria-live="polite"></div>
-        <div class="qchips">{''.join(f'<button type="button" data-q="{e(q)}">{e(q)}</button>' for q in qs)}</div>
-        <div class="chat-in"><input id="ask" placeholder="Ask an HR question" aria-label="Ask an HR question"><button class="btn btn-ink btn-sm" id="ask-go" type="button">Ask</button></div>
-      </div>
-    </div>
-  </div>
-</div>"""
-
-def demo_field():
-    return """<div class="demo-shell field" id="demo-field">
-  <div class="demo-top"><span class="dots"><i></i><i></i><i></i></span><span class="app">FieldProof · technician app + office</span><span class="badge">Demo · example data</span></div>
-  <div class="field-body">
-    <div class="phone-wrap"><div class="phone" id="f-phone" aria-live="polite"></div><p class="note" style="text-align:center;margin-top:10px">Technician app</p></div>
-    <div class="f-office" id="f-office" aria-live="polite"></div>
-  </div>
-  <div class="d-toast" id="f-toast" role="status"></div>
-</div>"""
-
-DEMOS = {"vendor-management": demo_vendor, "field-service": demo_field, "facility-management": demo_facility, "hr-tool": demo_hr}
 
 def uc_page(u):
     r = "../"
@@ -838,6 +697,10 @@ def main():
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(standalone(frag), encoding="utf-8")
     # preview entry for the claude.ai artifact (skeleton is added by the host)
+    # bundle the demos: shared toolkit first, then each demo in site order
+    parts = [DEMO_DIR / "_shared"] + [DEMO_DIR / s for s in DEMO_ORDER]
+    (OUT / "assets" / "demos.js").write_text("\n".join((d / f).read_text(encoding="utf-8") for d in parts for f in (["shared.js"] if d.name == "_shared" else ["demo.js"])), encoding="utf-8")
+    (OUT / "assets" / "demos.css").write_text("\n".join((d / f).read_text(encoding="utf-8") for d in parts for f in (["shared.css"] if d.name == "_shared" else ["demo.css"])), encoding="utf-8")
     (ROOT / "preview.html").write_text(pages["index.html"], encoding="utf-8")
     urls = "".join(f"  <url><loc>{SITE_URL}/{'' if p == 'index.html' else p}</loc></url>\n" for p in pages if p not in ("404.html", "thanks.html"))
     (OUT / "sitemap.xml").write_text(f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n{urls}</urlset>\n')

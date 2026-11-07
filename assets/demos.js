@@ -1,20 +1,296 @@
-/* Interactive demos. All data is fictional example data. */
-(function(){
-  var $ = function(s, r){ return (r||document).querySelector(s); };
-  var esc = function(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
-  var usd = function(n){ return '$' + (n>=1e6 ? (n/1e6).toFixed(2)+'M' : Math.round(n/1e3)+'k'); };
-  function typeInto(el, html, done){
-    // reveal text word by word for an "AI is writing" feel
+/* SDA demo toolkit – shared by every demo (window.SDA).
+   All data in the demos is fictional. Nothing is sent anywhere: AI steps, e-mails and notifications are simulated.
+
+   Main pieces
+   - SDA.demo(id, init)        lazy start when the demo becomes visible, reset support, visibility-aware timers
+   - SDA.roles(el, opts)       clear "View as" role switcher (+ banner) – each role gets its own view
+   - SDA.dms(el, opts)         document management: folders, search, upload, preview, versions, approve, link to records
+   - SDA.guide(el, opts)       "Try this" task with checkable steps, reset button and closing call to action
+   - SDA.modal / SDA.toast     dialogs and short confirmations
+   - SDA.docPage(doc)          renders a document (PDF/Word/Excel/CV) as a paper page for previews
+   - SDA.art(kind, label)      simple generated photos (parcel, meter, damage, …) as data URIs
+*/
+(function () {
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  var usd = function (n) { return '$' + (n >= 1e6 ? (n / 1e6).toFixed(2) + 'M' : n >= 1e4 ? Math.round(n / 1e3) + 'k' : Math.round(n).toLocaleString('en-US')); };
+  var money = function (n, dec) { return (n < 0 ? '−$' : '$') + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: dec ? 2 : 0, maximumFractionDigits: dec ? 2 : 0 }); };
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var n = 0; var uid = function (p) { return (p || 'id') + '-' + (++n) + '-' + Math.random().toString(36).slice(2, 6); };
+  var today = function (offsetDays) { var d = new Date(); d.setDate(d.getDate() + (offsetDays || 0)); return d; };
+  var fmtDate = function (d) { d = d instanceof Date ? d : new Date(d); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); };
+  var fmtTime = function (d) { d = d instanceof Date ? d : new Date(d); return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }); };
+
+  function typeInto(el, html, done) {
     var tmp = document.createElement('div'); tmp.innerHTML = html;
     var full = tmp.innerHTML, words = full.split(/(\s+)/), i = 0;
-    if(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches){ el.innerHTML = full; done && done(); return; }
+    if (reduce) { el.innerHTML = full; done && done(); return; }
     el.classList.add('typing'); clearInterval(el._t);
-    el._t = setInterval(function(){
-      i += 3; el.innerHTML = words.slice(0,i).join('');
-      if(i >= words.length){ clearInterval(el._t); el.innerHTML = full; el.classList.remove('typing'); done && done(); }
+    el._t = setInterval(function () {
+      i += 3; el.innerHTML = words.slice(0, i).join('');
+      if (i >= words.length) { clearInterval(el._t); el.innerHTML = full; el.classList.remove('typing'); done && done(); }
     }, 28);
   }
 
+  /* ---------------- icons ---------------- */
+  var I = function (p, vb) { return '<svg viewBox="' + (vb || '0 0 24 24') + '" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>'; };
+  var ICON = {
+    close: I('<path d="M6 6l12 12M18 6 6 18"/>'),
+    search: I('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>'),
+    upload: I('<path d="M12 16V4M7 9l5-5 5 5M4 20h16"/>'),
+    doc: I('<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/>'),
+    img: I('<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 17-5-5-7 7"/>'),
+    sheet: I('<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M4 15h16M10 3v18"/>'),
+    folder: I('<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>'),
+    link: I('<path d="M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/>'),
+    check: I('<path d="m5 12 5 5 9-10"/>'),
+    reset: I('<path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v5h5"/>'),
+    spark: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c.6 4.8 2.6 7.4 8 8-5.4.6-7.4 3.2-8 8-.6-4.8-2.6-7.4-8-8 5.4-.6 7.4-3.2 8-8z" fill="currentColor"/></svg>',
+    lock: I('<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'),
+    history: I('<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>'),
+    share: I('<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/>')
+  };
+
+  /* ---------------- generated photos ---------------- */
+  var ART = {
+    parcel: '<rect width="400" height="300" fill="#E8EEF0"/><rect x="0" y="210" width="400" height="90" fill="#C9D3D6"/><rect x="110" y="110" width="180" height="120" fill="#C79A63"/><path d="M110 110l30-30h180l-30 30z" fill="#D9B07A"/><path d="M290 110l30-30v120l-30 30z" fill="#A97E4C"/><rect x="185" y="110" width="30" height="120" fill="#E8D2A8"/><rect x="130" y="150" width="60" height="34" fill="#fff"/><path d="M136 160h44M136 170h30" stroke="#333" stroke-width="3"/>',
+    pallet: '<rect width="400" height="300" fill="#E9EDF0"/><rect y="230" width="400" height="70" fill="#BFC8CC"/><rect x="80" y="215" width="240" height="18" fill="#9B7B53"/><g fill="#C79A63"><rect x="90" y="140" width="70" height="75"/><rect x="165" y="140" width="70" height="75"/><rect x="240" y="140" width="70" height="75"/><rect x="125" y="70" width="70" height="70"/><rect x="200" y="70" width="70" height="70"/></g><path d="M80 70h240v160H80z" fill="#fff" opacity=".18"/>',
+    meter: '<rect width="400" height="300" fill="#DDE5E8"/><rect x="120" y="50" width="160" height="200" rx="18" fill="#F4F6F7" stroke="#9AA9AE" stroke-width="4"/><rect x="145" y="80" width="110" height="40" rx="6" fill="#20343C"/><text x="200" y="108" fill="#7CF0C8" font-family="monospace" font-size="24" text-anchor="middle">04827.3</text><circle cx="200" cy="180" r="34" fill="none" stroke="#9AA9AE" stroke-width="4"/><path d="M200 180l18-20" stroke="#E2563B" stroke-width="5" stroke-linecap="round"/>',
+    damage: '<rect width="400" height="300" fill="#ECE7E1"/><rect x="60" y="60" width="280" height="190" fill="#D8CFC4"/><path d="M150 60l20 50-30 30 40 40-20 70" stroke="#5B4A3B" stroke-width="5" fill="none"/><path d="M170 110l50-10 20 40" stroke="#5B4A3B" stroke-width="3" fill="none"/><ellipse cx="240" cy="210" rx="60" ry="22" fill="#9FB4BF" opacity=".7"/>',
+    install: '<rect width="400" height="300" fill="#E3EAED"/><rect x="70" y="40" width="260" height="220" rx="10" fill="#F7F9FA" stroke="#A6B4B9" stroke-width="4"/><rect x="100" y="70" width="200" height="60" rx="6" fill="#20343C"/><g fill="#5FD3BF"><circle cx="125" cy="100" r="7"/><circle cx="150" cy="100" r="7"/></g><path d="M100 160h200M100 190h140M100 220h170" stroke="#B9C5C9" stroke-width="10" stroke-linecap="round"/>',
+    leak: '<rect width="400" height="300" fill="#E6ECEE"/><rect y="200" width="400" height="100" fill="#C7D1D4"/><rect x="60" y="40" width="40" height="160" fill="#A9B6BA"/><rect x="60" y="120" width="220" height="26" fill="#A9B6BA"/><circle cx="280" cy="133" r="16" fill="#8E9CA0"/><path d="M290 150c6 14 10 22 10 30a10 10 0 0 1-20 0c0-8 4-16 10-30z" fill="#4FA3D9"/><ellipse cx="290" cy="240" rx="80" ry="18" fill="#4FA3D9" opacity=".55"/>',
+    room: '<rect width="400" height="300" fill="#EDEFEA"/><rect y="210" width="400" height="90" fill="#CDBFA9"/><rect x="40" y="60" width="120" height="90" fill="#BFE0E8" stroke="#fff" stroke-width="8"/><rect x="220" y="140" width="140" height="70" rx="8" fill="#5E7F78"/><rect x="230" y="120" width="120" height="30" rx="8" fill="#6E918A"/>',
+    signature: '<rect width="400" height="300" fill="#fff"/><path d="M60 200c30-60 50-90 60-70s-20 80 10 70 40-90 60-80-10 70 20 60 30-40 50-30 30 10 60 0" stroke="#1B2B33" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M50 230h300" stroke="#C8D0D3" stroke-width="3"/>',
+    portrait: '<rect width="400" height="300" fill="#DDEBEA"/><circle cx="200" cy="120" r="56" fill="#9DB7B3"/><path d="M90 300c10-70 60-100 110-100s100 30 110 100z" fill="#7FA09B"/>'
+  };
+  function art(kind, label) {
+    var body = ART[kind] || ART.parcel;
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">' + body +
+      (label ? '<rect x="0" y="262" width="400" height="38" fill="rgba(0,0,0,.45)"/><text x="14" y="287" fill="#fff" font-family="Arial" font-size="17">' + esc(label) + '</text>' : '') + '</svg>';
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  }
+
+  /* ---------------- demo registry: lazy start + reset ---------------- */
+  var registry = {};
+  function demo(id, init) {
+    var root = document.getElementById(id);
+    if (!root) return;
+    var template = root.cloneNode(true);
+    var state = { root: root, cleanup: [], started: false };
+    registry[id] = state;
+    function ctx(el) {
+      return {
+        id: id,
+        // runs fn every ms while the demo is on screen and the tab is visible
+        every: function (ms, fn) {
+          var t = setInterval(function () { if (document.visibilityState === 'visible' && el._sdaVisible !== false) fn(); }, ms);
+          state.cleanup.push(function () { clearInterval(t); });
+          return t;
+        },
+        later: function (ms, fn) { var t = setTimeout(fn, ms); state.cleanup.push(function () { clearTimeout(t); }); return t; },
+        reset: function () { reset(id); },
+        onCleanup: function (fn) { state.cleanup.push(fn); }
+      };
+    }
+    function start(el) {
+      state.started = true;
+      if ('IntersectionObserver' in window) {
+        var vis = new IntersectionObserver(function (es) { es.forEach(function (x) { el._sdaVisible = x.isIntersecting; }); });
+        vis.observe(el); state.cleanup.push(function () { vis.disconnect(); });
+      }
+      var out = init(el, ctx(el));
+      if (typeof out === 'function') state.cleanup.push(out);
+    }
+    state.restart = function () {
+      state.cleanup.forEach(function (f) { try { f(); } catch (e) {} }); state.cleanup = [];
+      var fresh = template.cloneNode(true);
+      state.root.replaceWith(fresh); state.root = fresh;
+      start(fresh);
+      var first = fresh.querySelector('.sda-guide, .demo-top'); if (first && first.scrollIntoView) { /* keep position */ }
+    };
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (es) {
+        if (es.some(function (x) { return x.isIntersecting; })) { io.disconnect(); start(root); }
+      }, { rootMargin: '300px' });
+      io.observe(root);
+    } else start(root);
+  }
+  function reset(id) { var s = registry[id]; if (s) s.restart(); }
+
+  /* ---------------- toast + modal ---------------- */
+  function toast(root, msg, kind) {
+    var host = root.querySelector(':scope > .sda-toast') || root.appendChild(Object.assign(document.createElement('div'), { className: 'sda-toast', role: 'status' }));
+    host.innerHTML = (kind === 'warn' ? '' : ICON.check) + '<span>' + msg + '</span>';
+    host.className = 'sda-toast on' + (kind ? ' ' + kind : '');
+    clearTimeout(host._t); host._t = setTimeout(function () { host.classList.remove('on'); }, 2600);
+  }
+  function modal(root, opts) {
+    var host = document.createElement('div');
+    host.className = 'sda-modal' + (opts.wide ? ' wide' : '');
+    host.innerHTML = '<div class="sda-scrim" data-close></div><div class="sda-dialog" role="dialog" aria-modal="true" aria-label="' + esc(opts.title || 'Details') + '">' +
+      '<div class="sda-dialog-h"><b>' + esc(opts.title || '') + '</b><button type="button" class="sda-x" data-close aria-label="Close">' + ICON.close + '</button></div>' +
+      '<div class="sda-dialog-b"></div></div>';
+    $('.sda-dialog-b', host).innerHTML = opts.html || '';
+    root.appendChild(host);
+    var last = document.activeElement;
+    var close = function () { host.remove(); if (last && last.focus) last.focus(); opts.onClose && opts.onClose(); };
+    host.addEventListener('click', function (e) { if (e.target.closest('[data-close]')) close(); });
+    host.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+    setTimeout(function () { var f = host.querySelector('.sda-dialog-b button, .sda-dialog-b input, .sda-dialog-b select, .sda-dialog-b textarea, .sda-x'); f && f.focus(); }, 30);
+    return { el: host, body: $('.sda-dialog-b', host), close: close };
+  }
+
+  /* ---------------- role switcher ---------------- */
+  // opts: { roles: [{id, label, sub, icon}], value, onChange(id), title }
+  function roles(el, opts) {
+    var cur = opts.value || opts.roles[0].id;
+    el.classList.add('sda-roles');
+    el.innerHTML = '<div class="sda-roles-row"><span class="sda-roles-l">' + esc(opts.title || 'Switch user') + '</span><div class="sda-roles-seg" role="radiogroup" aria-label="' + esc(opts.title || 'Switch user') + '">' +
+      opts.roles.map(function (r) {
+        return '<button type="button" role="radio" data-role="' + r.id + '"><span class="sda-av" aria-hidden="true">' + (r.icon || esc(r.label.slice(0, 1))) + '</span><span><b>' + esc(r.label) + '</b><small>' + esc(r.person || '') + '</small></span></button>';
+      }).join('') + '</div></div><div class="sda-roles-banner" aria-live="polite"></div>';
+    function paint() {
+      var r = opts.roles.filter(function (x) { return x.id === cur; })[0];
+      $$('[data-role]', el).forEach(function (b) { var on = b.dataset.role === cur; b.setAttribute('aria-checked', on); b.tabIndex = on ? 0 : -1; });
+      var ban = $('.sda-roles-banner', el);
+      ban.innerHTML = '<span class="sda-av sm" aria-hidden="true">' + (r.icon || '') + '</span><span>You are signed in as <b>' + esc(r.person ? r.person + ' · ' + r.label : r.label) + '</b>. ' + esc(r.sub || '') + '</span>';
+      ban.classList.remove('flash'); void ban.offsetWidth; ban.classList.add('flash');
+    }
+    el.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-role]'); if (!b || b.dataset.role === cur) return;
+      cur = b.dataset.role; paint(); opts.onChange && opts.onChange(cur);
+    });
+    el.addEventListener('keydown', function (e) {
+      if (!/Arrow(Left|Right)/.test(e.key)) return;
+      var ids = opts.roles.map(function (r) { return r.id; }), i = ids.indexOf(cur);
+      i = (i + (e.key === 'ArrowRight' ? 1 : -1) + ids.length) % ids.length; cur = ids[i]; paint();
+      $('[data-role="' + cur + '"]', el).focus(); opts.onChange && opts.onChange(cur);
+    });
+    paint();
+    return { get: function () { return cur; }, set: function (id) { cur = id; paint(); opts.onChange && opts.onChange(cur); } };
+  }
+
+  /* ---------------- document page preview ---------------- */
+  // doc: {name, type, title, company, meta:[[k,v]], sections:[{h, p|lines|rows}], img}
+  function docPage(doc) {
+    if (doc.img) return '<figure class="sda-photo"><img src="' + doc.img + '" alt="' + esc(doc.name) + '"><figcaption>' + esc(doc.name) + '</figcaption></figure>';
+    var sec = (doc.sections || []).map(function (s) {
+      var h = s.h ? '<h5>' + esc(s.h) + '</h5>' : '';
+      if (s.rows) return h + '<table>' + s.rows.map(function (r, i) { return '<tr>' + r.map(function (c) { return i === 0 && s.head !== false ? '<th>' + esc(c) + '</th>' : '<td>' + esc(c) + '</td>'; }).join('') + '</tr>'; }).join('') + '</table>';
+      if (s.lines) return h + '<ul>' + s.lines.map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + '</ul>';
+      return h + '<p>' + esc(s.p || '') + '</p>';
+    }).join('');
+    var meta = (doc.meta || []).map(function (m) { return '<span><i>' + esc(m[0]) + '</i>' + esc(m[1]) + '</span>'; }).join('');
+    var placeholder = !doc.sections ? '<div class="sda-page-lines"><i></i><i></i><i class="s"></i><i></i><i class="s"></i><i></i><i></i><i class="s"></i></div><p class="sda-page-note">Preview of an uploaded file. In the demo its content is not read.</p>' : '';
+    return '<article class="sda-page"><header><span class="sda-page-co">' + esc(doc.company || 'SDA demo') + '</span><span class="sda-page-type">' + esc((doc.type || 'pdf').toUpperCase()) + '</span></header>' +
+      '<h4>' + esc(doc.title || doc.name) + '</h4>' + (meta ? '<div class="sda-page-meta">' + meta + '</div>' : '') + sec + placeholder + '</article>';
+  }
+
+  /* ---------------- DMS ---------------- */
+  // opts: { docs:[...], folders:[...], records:[...names for linking], title, canUpload(role), canApprove(role), role, onChange(docs), compact }
+  // doc: {id, name, type:'pdf'|'docx'|'xlsx'|'jpg', folder, linked, owner, date, version, status, tags[], versions[{v,date,by,note}], + docPage fields}
+  function dms(el, opts) {
+    var docs = (opts.docs || []).map(function (d) { return Object.assign({ id: uid('doc'), version: 1, status: 'Valid', tags: [], versions: [] }, d); });
+    docs.forEach(function (d) { if (!d.versions.length) d.versions = [{ v: d.version, date: d.date || fmtDate(today(-20)), by: d.owner || 'System', note: 'Uploaded' }]; });
+    var st = { q: '', folder: 'All', role: opts.role };
+    var root = opts.root || el.closest('.demo-shell') || document.body;
+    var typeIcon = function (t) { return /jpg|png|img|photo/.test(t) ? ICON.img : /xls/.test(t) ? ICON.sheet : ICON.doc; };
+    var pill = function (s) { var c = /expir|missing|overdue|reject/i.test(s) ? 'p-bad' : /draft|review|pending|due/i.test(s) ? 'p-warn' : 'p-ok'; return '<span class="pill ' + c + '">' + esc(s) + '</span>'; };
+    var allowed = function (fn) { return !opts[fn] || opts[fn](st.role); };
+    el.classList.add('sda-dms');
+    function folders() { var f = ['All'].concat(opts.folders || []); docs.forEach(function (d) { if (f.indexOf(d.folder) < 0) f.push(d.folder); }); return f; }
+    function list() {
+      return docs.filter(function (d) {
+        if (st.folder !== 'All' && d.folder !== st.folder) return false;
+        if (opts.filter && !opts.filter(d, st.role)) return false;
+        var q = st.q.toLowerCase(); return !q || (d.name + ' ' + (d.linked || '') + ' ' + d.tags.join(' ') + ' ' + d.folder).toLowerCase().indexOf(q) > -1;
+      });
+    }
+    function render() {
+      var L = list();
+      el.innerHTML = '<div class="sda-dms-h"><div><b>' + esc(opts.title || 'Documents') + '</b><small>' + docs.length + ' files · versioned · linked to records</small></div>' +
+        '<div class="sda-dms-tools"><label class="sda-search">' + ICON.search + '<input type="search" placeholder="Search documents" aria-label="Search documents" value="' + esc(st.q) + '"></label>' +
+        (allowed('canUpload') ? '<button type="button" class="btn btn-ink btn-sm" data-dms="upload">' + ICON.upload + 'Upload</button><input type="file" class="sda-file" hidden multiple>' : '<span class="sda-ro">' + ICON.lock + 'Read only for this role</span>') + '</div></div>' +
+        '<div class="sda-dms-folders" role="group" aria-label="Folders">' + folders().map(function (f) { return '<button type="button" data-folder="' + esc(f) + '" aria-pressed="' + (st.folder === f) + '">' + ICON.folder + esc(f) + '</button>'; }).join('') + '</div>' +
+        (L.length ? '<div class="sda-dms-list">' + L.map(function (d) {
+          return '<button type="button" class="sda-doc" data-doc="' + d.id + '"><span class="sda-doc-ic t-' + esc(d.type) + '">' + typeIcon(d.type) + '</span><span class="sda-doc-n"><b>' + esc(d.name) + '</b><small>' + esc(d.folder) + (d.linked ? ' · ' + esc(d.linked) : '') + '</small></span><span class="sda-doc-v">v' + d.version + '</span>' + pill(d.status) + '</button>';
+        }).join('') + '</div>' : '<div class="sda-empty">No documents match. Try another folder or search term.</div>');
+    }
+    function open(id) {
+      var d = docs.filter(function (x) { return x.id === id; })[0]; if (!d) return;
+      var hist = d.versions.slice().reverse().map(function (v) { return '<li><b>v' + v.v + '</b> · ' + esc(v.date) + ' · ' + esc(v.by) + '<small>' + esc(v.note) + '</small></li>'; }).join('');
+      var m = modal(root, { title: d.name, wide: true, html:
+        '<div class="sda-prev"><div class="sda-prev-doc">' + docPage(d) + '</div><aside class="sda-prev-side">' +
+        '<dl><dt>Status</dt><dd>' + pill(d.status) + '</dd><dt>Folder</dt><dd>' + esc(d.folder) + '</dd><dt>Linked to</dt><dd>' + esc(d.linked || '—') + '</dd><dt>Owner</dt><dd>' + esc(d.owner || '—') + '</dd><dt>Version</dt><dd>v' + d.version + '</dd>' + (d.tags.length ? '<dt>Tags</dt><dd>' + d.tags.map(function (t) { return '<span class="sda-tag">' + esc(t) + '</span>'; }).join(' ') + '</dd>' : '') + '</dl>' +
+        '<div class="sda-prev-acts">' +
+        (allowed('canApprove') && /draft|review|pending/i.test(d.status) ? '<button type="button" class="btn btn-ink btn-sm" data-act="approve">' + ICON.check + 'Approve</button>' : '') +
+        (allowed('canUpload') ? '<button type="button" class="btn btn-ghost btn-sm" data-act="version">' + ICON.upload + 'Upload new version</button>' : '') +
+        '<button type="button" class="btn btn-ghost btn-sm" data-act="share">' + ICON.share + 'Copy share link</button></div>' +
+        '<h6>' + ICON.history + 'Version history</h6><ol class="sda-hist">' + hist + '</ol></aside></div>' });
+      m.body.addEventListener('click', function (e) {
+        var a = e.target.closest('[data-act]'); if (!a) return;
+        if (a.dataset.act === 'approve') { d.status = 'Approved'; d.versions.push({ v: d.version, date: fmtDate(today()), by: opts.userName ? opts.userName(st.role) : 'You', note: 'Approved' }); m.close(); render(); toast(root, 'Approved: ' + esc(d.name)); opts.onChange && opts.onChange(docs, d, 'approve'); }
+        if (a.dataset.act === 'version') { d.version += 1; d.versions.push({ v: d.version, date: fmtDate(today()), by: opts.userName ? opts.userName(st.role) : 'You', note: 'New version uploaded (simulated)' }); m.close(); render(); toast(root, 'Version ' + d.version + ' saved for ' + esc(d.name)); opts.onChange && opts.onChange(docs, d, 'version'); }
+        if (a.dataset.act === 'share') { toast(root, 'Share link copied (simulated, expires in 7 days)'); }
+      });
+    }
+    function addFiles(files) {
+      Array.prototype.forEach.call(files, function (f) {
+        var isImg = /^image\//.test(f.type), ext = (f.name.split('.').pop() || 'pdf').toLowerCase();
+        var d = { id: uid('doc'), name: f.name, type: isImg ? 'jpg' : ext, folder: st.folder === 'All' ? (opts.uploadFolder || (opts.folders || ['Uploads'])[0]) : st.folder, linked: opts.defaultLink || '', owner: opts.userName ? opts.userName(st.role) : 'You', date: fmtDate(today()), version: 1, status: opts.uploadStatus || 'Draft', tags: ['uploaded'], versions: [] };
+        if (isImg) d.img = URL.createObjectURL(f);
+        d.versions = [{ v: 1, date: d.date, by: d.owner, note: 'Uploaded from this device (stays in your browser)' }];
+        docs.unshift(d);
+      });
+      render(); toast(root, files.length + ' file' + (files.length > 1 ? 's' : '') + ' added. Nothing leaves your browser.'); opts.onChange && opts.onChange(docs);
+    }
+    el.addEventListener('input', function (e) { if (e.target.type === 'search') { st.q = e.target.value; var pos = e.target.selectionStart; render(); var i = $('input[type=search]', el); i.focus(); try { i.setSelectionRange(pos, pos); } catch (x) {} } });
+    el.addEventListener('change', function (e) { if (e.target.classList.contains('sda-file') && e.target.files.length) addFiles(e.target.files); });
+    el.addEventListener('click', function (e) {
+      var t;
+      if ((t = e.target.closest('[data-folder]'))) { st.folder = t.dataset.folder; render(); return; }
+      if ((t = e.target.closest('[data-doc]'))) { open(t.dataset.doc); return; }
+      if (e.target.closest('[data-dms="upload"]')) { $('.sda-file', el).click(); }
+    });
+    render();
+    return {
+      add: function (d) { d = Object.assign({ id: uid('doc'), version: 1, status: 'Valid', tags: [], date: fmtDate(today()) }, d); if (!d.versions) d.versions = [{ v: 1, date: d.date, by: d.owner || 'System', note: d.note || 'Added' }]; docs.unshift(d); render(); opts.onChange && opts.onChange(docs, d, 'add'); return d; },
+      docs: function () { return docs; },
+      open: open,
+      setRole: function (r) { st.role = r; render(); },
+      setFolder: function (f) { st.folder = f; render(); },
+      render: render
+    };
+  }
+
+  /* ---------------- guided task + reset ---------------- */
+  // opts: { title, steps:[{id, text}], cta:{href, text}, demoId }
+  function guide(el, opts) {
+    var done = {};
+    el.classList.add('sda-guide');
+    function render() {
+      var n = opts.steps.filter(function (s) { return done[s.id]; }).length, all = n === opts.steps.length;
+      el.innerHTML = '<div class="sda-guide-h"><span class="sda-guide-k">' + ICON.spark + 'Try it yourself</span><b>' + esc(opts.title) + '</b><span class="sda-guide-n">' + n + ' / ' + opts.steps.length + '</span>' +
+        '<button type="button" class="sda-reset" data-reset>' + ICON.reset + 'Reset demo</button></div>' +
+        '<ol class="sda-steps">' + opts.steps.map(function (s, i) { return '<li class="' + (done[s.id] ? 'ok' : '') + '"><span class="sda-step-d">' + (done[s.id] ? ICON.check : (i + 1)) + '</span>' + s.text + '</li>'; }).join('') + '</ol>' +
+        (all ? '<div class="sda-guide-done">' + ICON.check + '<span><b>Done. That is the whole flow.</b> We build this around your processes and systems.</span>' + (opts.cta ? '<a class="btn btn-primary btn-sm" href="' + opts.cta.href + '">' + esc(opts.cta.text) + ' <span class="arr">→</span></a>' : '') + '</div>' : '');
+    }
+    el.addEventListener('click', function (e) { if (e.target.closest('[data-reset]') && opts.demoId) reset(opts.demoId); });
+    render();
+    return { done: function (id) { if (!done[id]) { done[id] = true; render(); } }, isDone: function (id) { return !!done[id]; } };
+  }
+
+  /* simulation note shown in each demo top bar */
+  var SIM = 'Interactive simulation with sample data. Nothing is sent; AI steps are simulated.';
+
+  window.SDA = { $: $, $$: $$, esc: esc, usd: usd, money: money, uid: uid, today: today, fmtDate: fmtDate, fmtTime: fmtTime, typeInto: typeInto,
+    reduce: reduce, icon: ICON, art: art, demo: demo, reset: reset, toast: toast, modal: modal, roles: roles, dms: dms, docPage: docPage, guide: guide, SIM: SIM };
+})();
+
+/* Vendor Management demo. All data is fictional example data. */
+(function(){
+  var $ = SDA.$, esc = SDA.esc, usd = SDA.usd, typeInto = SDA.typeInto;
   (function(){
   /* =================== VENDOR MANAGEMENT =================== */
   var ven = $('#demo-vendor');
@@ -350,402 +626,11 @@
     counts(); render();
   }
   })();
+})();
 
-  (function(){
-  /* =================== FACILITY MANAGEMENT =================== */
-  var fac = $('#demo-facility');
-  if(fac){
-    var R = {
-      lobby:{n:'Lobby', t:21.4}, meetA:{n:'Meeting A', t:22.0}, meetB:{n:'Meeting B', t:24.8}, kitchen:{n:'Kitchen', t:22.3},
-      east:{n:'Office East', t:21.8}, west:{n:'Office West', t:22.1}, server:{n:'Server room', t:27.9}, wc:{n:'Restrooms', t:21.0},
-      stairs:{n:'Stairs', t:20.4}, wh:{n:'Warehouse', t:17.6}, dock:{n:'Loading dock', t:15.2}
-    };
-    var T = [
-      {id:'FM-1041', room:'server', txt:'Server room temperature above threshold', cat:'HVAC', pri:'Critical', team:'HVAC contractor', st:'Dispatched'},
-      {id:'FM-1040', room:'meetB', txt:'Projector not turning on', cat:'IT / AV', pri:'Medium', team:'IT service desk', st:'Open'}
-    ];
-    var RULES = [
-      {cat:'HVAC', re:/(hot|cold|temperat|heat|air ?con|hvac|ventilat|warm|stuffy)/i, team:'HVAC contractor'},
-      {cat:'Plumbing', re:/(leak|water|tap|toilet|drain|flood|pipe|drip)/i, team:'Plumbing team'},
-      {cat:'Electrical', re:/(light|power|socket|electric|outage|flicker|lamp|breaker)/i, team:'Electrician'},
-      {cat:'IT / AV', re:/(wifi|wi-fi|network|projector|screen|printer|internet|display|beamer)/i, team:'IT service desk'},
-      {cat:'Security', re:/(door|lock|badge|access|alarm|camera|window broken)/i, team:'Security'},
-      {cat:'Cleaning', re:/(clean|spill|dirty|trash|bin|smell|mess)/i, team:'Cleaning crew'}
-    ];
-    var ROOMWORDS = {lobby:/lobby|entrance|reception/i, meetA:/meeting ?a|room a/i, meetB:/meeting ?b|room b/i, kitchen:/kitchen|coffee|canteen/i, east:/east/i, west:/west/i, server:/server/i, wc:/restroom|toilet|wc|bathroom/i, stairs:/stair/i, wh:/warehouse|storage/i, dock:/dock|loading/i};
-    var next = 1042;
-    var priCls = {Critical:'p-bad', High:'p-warn', Medium:'p-info', Low:'p-ok'};
-    function roomState(k){
-      var open = T.filter(function(t){ return t.room===k && t.st!=='Resolved'; });
-      if(open.some(function(t){ return t.pri==='Critical'||t.pri==='High'; })) return 'bad';
-      if(open.length || R[k].t>24.5 || R[k].t<16) return 'warn';
-      return '';
-    }
-    function renderPlan(sel){
-      $('#fplan', fac).innerHTML = Object.keys(R).map(function(k){
-        return '<button type="button" class="room r-'+k+' '+roomState(k)+(sel===k?' sel flash':'')+'" data-k="'+k+'">'+R[k].n+'<small>'+R[k].t.toFixed(1)+' °C</small></button>';
-      }).join('');
-    }
-    function renderTickets(){
-      $('#fm-list', fac).innerHTML = T.map(function(t){
-        return '<div class="ticket"><span class="id">'+t.id+'</span><div><b>'+esc(t.txt)+'</b><div class="meta">'+R[t.room].n+' · '+t.cat+' · '+t.team+' · '+t.st+'</div>'+(t.st!=='Resolved'?'<div class="btn-row" style="margin-top:8px">'+(t.st==='Open'?'<button type="button" class="btn btn-ghost btn-sm" data-tk="'+t.id+'" data-to="Dispatched">Dispatch team</button>':'')+'<button type="button" class="btn btn-ink btn-sm" data-tk="'+t.id+'" data-to="Resolved">Mark resolved</button></div>':'')+'</div><span class="pill '+(t.st==='Resolved'?'p-ok':priCls[t.pri])+'">'+(t.st==='Resolved'?'Resolved':t.pri)+'</span></div>';
-      }).join('');
-      var open = T.filter(function(t){return t.st!=='Resolved';});
-      $('#fk-open', fac).textContent = open.length;
-      $('#fk-crit', fac).textContent = open.filter(function(t){return t.pri==='Critical';}).length;
-    }
-    function triage(text){
-      var rule = RULES.filter(function(r){ return r.re.test(text); })[0] || {cat:'General', team:'Facility manager'};
-      var room = Object.keys(ROOMWORDS).filter(function(k){ return ROOMWORDS[k].test(text); })[0] || 'lobby';
-      var pri = /(flood|fire|smoke|outage|alarm|urgent|server|danger|broken window)/i.test(text) ? 'Critical' :
-                /(leak|no power|not working|broken|stuck)/i.test(text) ? 'High' :
-                /(clean|smell|bin|flicker)/i.test(text) ? 'Low' : 'Medium';
-      var eta = {Critical:'within 1 hour', High:'today', Medium:'within 2 business days', Low:'next scheduled round'}[pri];
-      return {cat:rule.cat, team:rule.team, room:room, pri:pri, eta:eta};
-    }
-    function submit(text){
-      text = text.trim(); var out = $('#fm-ai', fac);
-      if(!text){ out.innerHTML = '<p>Describe the problem first, for example “Water leaking under the sink in the kitchen”.</p>'; return; }
-      var r = triage(text), id = 'FM-'+(next++);
-      T.unshift({id:id, room:r.room, txt:text, cat:r.cat, pri:r.pri, team:r.team, st:'Open'});
-      renderTickets(); renderPlan(r.room);
-      typeInto(out, '<p>Created <b>'+id+'</b>.</p><ul><li>Location: <b>'+R[r.room].n+'</b></li><li>Category: <b>'+r.cat+'</b></li><li>Priority: <b>'+r.pri+'</b>, response '+r.eta+'</li><li>Assigned to: <b>'+r.team+'</b></li></ul>'+(r.cat==='Plumbing'?'<p style="margin-top:6px">Tip sent to reporter: close the local shut-off valve if safe to do so.</p>':''));
-      $('#fm-text', fac).value = '';
-    }
-    $('#fm-go', fac).addEventListener('click', function(){ submit($('#fm-text', fac).value); });
-    $('#fm-text', fac).addEventListener('keydown', function(e){ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); submit(e.target.value); } });
-    fac.querySelectorAll('[data-sample]').forEach(function(b){ b.addEventListener('click', function(){ $('#fm-text', fac).value = b.dataset.sample; $('#fm-text', fac).focus(); }); });
-    $('#fplan', fac).addEventListener('click', function(e){
-      var b = e.target.closest('.room'); if(!b) return; var k = b.dataset.k;
-      renderPlan(k);
-      var open = T.filter(function(t){return t.room===k && t.st!=='Resolved';});
-      $('#fm-room', fac).innerHTML = '<b>'+R[k].n+'</b> · '+R[k].t.toFixed(1)+' °C · '+(open.length? open.length+' open ticket'+(open.length>1?'s':'') : 'no open tickets');
-    });
-    /* simulated sensor drift */
-    setInterval(function(){
-      Object.keys(R).forEach(function(k){ R[k].t += (Math.random()-.5)*0.2; if(k==='server') R[k].t = Math.max(26.5, Math.min(29, R[k].t)); });
-      var sel = (fac.querySelector('.room.sel')||{}).dataset; renderPlan(sel ? sel.k : null);
-      fac.querySelectorAll('.room.flash').forEach(function(x){ x.classList.remove('flash'); });
-    }, 4000);
-    $('#fm-list', fac).addEventListener('click', function(e){ var b = e.target.closest('[data-tk]'); if(!b) return; T.forEach(function(t){ if(t.id===b.dataset.tk) t.st = b.dataset.to; }); renderTickets(); var sel = (fac.querySelector('.room.sel')||{}).dataset; renderPlan(sel ? sel.k : null); });
-    renderPlan(); renderTickets();
-  }
-  })();
-
-  (function(){
-  /* =================== HR TOOL =================== */
-  var hr = $('#demo-hr');
-  if(hr){
-    /* tabs */
-    var tabs = hr.querySelectorAll('[role=tab]');
-    tabs.forEach(function(t){ t.addEventListener('click', function(){
-      tabs.forEach(function(x){ x.setAttribute('aria-selected', x===t); $('#'+x.getAttribute('aria-controls')).hidden = x!==t; });
-    }); });
-
-    /* recruiting */
-    var STAGES = ['Applied','Screening','Interview','Offer'];
-    var C = [
-      {n:'Laura White', r:'fe', st:0, yrs:5, skills:{React:5,TypeScript:5,Testing:3,Accessibility:3}, note:'Led a design-system migration; strong accessibility focus.'},
-      {n:'Daniel Clark', r:'fe', st:0, yrs:2, skills:{React:3,TypeScript:2,Testing:2,Accessibility:1}, note:'Junior profile, quick learner, limited TypeScript experience.'},
-      {n:'Julia Young', r:'fe', st:1, yrs:7, skills:{React:5,TypeScript:4,Testing:5,Accessibility:3}, note:'Senior engineer from e-commerce; owned CI test strategy.'},
-      {n:'Michael Brown', r:'fe', st:2, yrs:4, skills:{React:4,TypeScript:4,Testing:3,Accessibility:3}, note:'Solid all-rounder; available in 4 weeks.'},
-      {n:'Lisa Miller', r:'fe', st:3, yrs:6, skills:{React:5,TypeScript:5,Testing:3,Accessibility:5}, note:'Excellent technical interview; salary expectation within band.'},
-      {n:'John Smith', r:'sm', st:0, yrs:8, skills:{'B2B sales':5,Negotiation:4,CRM:4,Languages:5}, note:'Exceeded quota three years running in industrial SaaS.'},
-      {n:'Sarah Johnsonč', r:'sm', st:1, yrs:3, skills:{'B2B sales':3,Negotiation:3,CRM:5,Languages:3}, note:'Strong CRM hygiene; less enterprise experience.'},
-      {n:'Mark Lewis', r:'sm', st:2, yrs:10, skills:{'B2B sales':5,Negotiation:5,CRM:2,Languages:5}, note:'Enterprise closer; wants a team-lead path.'}
-    ];
-    var ROLE = {fe:{t:'Frontend Engineer', need:{React:5,TypeScript:5,Testing:4,Accessibility:4}, yrs:5}, sm:{t:'Sales Manager EMEA', need:{'B2B sales':5,Negotiation:5,CRM:4,Languages:5}, yrs:6}};
-    C.forEach(function(c){
-      var need = ROLE[c.r].need, tot=0, got=0;
-      Object.keys(need).forEach(function(k){ tot += need[k]; got += Math.min(c.skills[k]||0, need[k]); });
-      c.score = Math.round((got/tot)*80 + Math.min(c.yrs/ROLE[c.r].yrs,1)*20);
-    });
-    var role = 'fe', selC = null;
-    var initials = function(n){ return n.split(' ').map(function(x){return x[0];}).join(''); };
-    var sc = function(s){ return s>=85?'s-hi':s>=70?'s-mid':'s-lo'; };
-    function renderBoard(){
-      $('#kanban', hr).innerHTML = STAGES.map(function(stg, i){
-        var cs = C.filter(function(c){ return c.r===role && c.st===i; }).sort(function(a,b){return b.score-a.score;});
-        return '<div class="col"><h4>'+stg+'<span>'+cs.length+'</span></h4>'+(cs.map(function(c){
-          return '<button type="button" class="cand'+(selC===c.n?' sel':'')+'" data-n="'+esc(c.n)+'"><span class="av">'+initials(c.n)+'</span><span><b>'+esc(c.n)+'</b><small>'+c.yrs+' yrs experience</small></span><span class="score '+sc(c.score)+'">'+c.score+'</span></button>';
-        }).join('') || '<div class="empty" style="padding:12px">No candidates</div>')+'</div>';
-      }).join('');
-    }
-    function showCand(n){
-      selC = n; renderBoard();
-      var c = C.filter(function(x){return x.n===n;})[0], need = ROLE[c.r].need;
-      var rows = Object.keys(need).map(function(k){
-        var v = c.skills[k]||0, ok = v>=need[k];
-        return '<div class="meter" style="font-size:13px;margin-top:8px"><span style="width:110px">'+k+'</span><i><b style="width:'+(v*20)+'%;background:'+(ok?'var(--ok)':'var(--warn)')+'"></b></i><span style="width:44px;text-align:right">'+v+'/'+need[k]+'</span></div>';
-      }).join('');
-      var gaps = Object.keys(need).filter(function(k){ return (c.skills[k]||0) < need[k]; });
-      var q = gaps.length ? gaps.map(function(g){ return 'Walk me through a recent project where you used '+g+'. What would you do differently?'; }) : ['Which part of this role would you change in your first 90 days, and why?'];
-      $('#cand-detail', hr).innerHTML =
-        '<div style="display:flex;gap:12px;align-items:center"><span class="av" style="width:44px;height:44px">'+initials(c.n)+'</span><div><h3>'+esc(c.n)+'</h3><div style="font-size:13.5px;color:var(--dim)">'+ROLE[c.r].t+' · '+STAGES[c.st]+'</div></div><span class="score '+sc(c.score)+'" style="margin-left:auto;font-size:16px">'+c.score+'%</span></div>'+
-        '<h4>Skill match vs. job profile</h4>'+rows+
-        '<div class="ai-box"><div class="ai-h">AI summary</div><div id="cand-ai"></div></div>'+
-        '<div class="btn-row">'+(c.st<3?'<button type="button" class="btn btn-ink btn-sm" id="adv">Move to '+STAGES[c.st+1]+'</button>':'<span class="pill p-ok">Offer stage</span>')+'</div>';
-      typeInto($('#cand-ai', hr), '<p>'+esc(c.note)+' '+(gaps.length?'Gaps: <b>'+gaps.join(', ')+'</b>.':'Meets every core requirement.')+'</p><p style="margin-top:6px"><b>Suggested interview questions</b></p><ul><li>'+q.slice(0,2).map(esc).join('</li><li>')+'</li></ul>');
-      var a = $('#adv', hr); if(a) a.onclick = function(){ c.st++; showCand(c.n); };
-    }
-    $('#role', hr).addEventListener('change', function(e){ role = e.target.value; var first = C.filter(function(c){return c.r===role;}).sort(function(a,b){return b.score-a.score;})[0]; showCand(first.n); });
-    $('#kanban', hr).addEventListener('click', function(e){ var b = e.target.closest('.cand'); if(b) showCand(b.dataset.n); });
-    renderBoard(); showCand('Lisa Miller');
-
-    /* leave */
-    var DAYS = ['Mo 7','Tu 8','We 9','Th 10','Fr 11','Mo 14','Tu 15','We 16','Th 17','Fr 18'];
-    var TEAM = [
-      {n:'Anna Moore', on:[0,1,2], st:'approved'},
-      {n:'David Wilson', on:[3,4,5,6], st:'pending', reason:'Family visit', bal:14},
-      {n:'Emma Davis', on:[5,6,7], st:'pending', reason:'Vacation', bal:9},
-      {n:'James Taylor', on:[8,9], st:'pending', reason:'Training course', bal:21},
-      {n:'Chris Walker', on:[], st:'none'}
-    ];
-    var MINSTAFF = 3;
-    function renderLeave(){
-      var cal = '<span></span>'+DAYS.map(function(d){return '<span style="text-align:center">'+d+'</span>';}).join('');
-      TEAM.forEach(function(p){
-        cal += '<span class="nm">'+p.n+'</span>'+DAYS.map(function(d,i){
-          var on = p.on.indexOf(i)>-1 && p.st!=='declined';
-          return '<span class="c '+(on?(p.st==='approved'?'on':'pend'):'')+'"></span>';
-        }).join('');
-      });
-      $('#cal', hr).innerHTML = cal;
-      $('#leave-list', hr).innerHTML = TEAM.filter(function(p){return p.reason;}).map(function(p, idx){
-        var clash = p.on.filter(function(d){
-          var away = TEAM.filter(function(o){ return o!==p && o.on.indexOf(d)>-1 && (o.st==='approved'); }).length + 1;
-          return TEAM.length - away < MINSTAFF;
-        });
-        var hint = p.st!=='pending' ? '' : clash.length ?
-          '<span class="pill p-warn">Coverage below '+MINSTAFF+' on '+clash.map(function(d){return DAYS[d];}).join(', ')+'</span>' :
-          '<span class="pill p-ok">AI check: coverage OK, balance '+p.bal+' days</span>';
-        return '<div class="leave"><div><b>'+p.n+'</b> · '+p.reason+'<div class="meta">'+DAYS[p.on[0]]+' – '+DAYS[p.on[p.on.length-1]]+' · '+p.on.length+' days</div><div style="margin-top:6px">'+hint+'</div></div><div class="btn-row" style="margin:0">'+
-          (p.st==='pending' ? '<button type="button" class="btn btn-ink btn-sm" data-a="approved" data-n="'+esc(p.n)+'">Approve</button><button type="button" class="btn btn-ghost btn-sm" data-a="declined" data-n="'+esc(p.n)+'">Decline</button>' :
-          '<span class="pill '+(p.st==='approved'?'p-ok':'p-bad')+'">'+(p.st==='approved'?'Approved':'Declined')+'</span>')+'</div></div>';
-      }).join('');
-    }
-    $('#leave-list', hr).addEventListener('click', function(e){
-      var b = e.target.closest('[data-a]'); if(!b) return;
-      TEAM.forEach(function(p){ if(p.n===b.dataset.n) p.st = b.dataset.a; }); renderLeave();
-    });
-    renderLeave();
-
-    /* assistant */
-    var KB = [
-      {re:/(vacation|holiday|leave|days off|annual)/i, a:'Full-time employees receive <b>30 days</b> of paid annual leave per calendar year. Up to 5 unused days carry over until 31 March of the following year.', src:'Example Handbook §4.1 Annual leave'},
-      {re:/(sick|ill|doctor|medical)/i, a:'Report sickness to your manager before your shift starts. From the <b>third day</b> of absence, a medical certificate is required.', src:'Example Handbook §4.3 Sick leave'},
-      {re:/(remote|home office|work from home|wfh|hybrid)/i, a:'You can work remotely up to <b>3 days per week</b> after agreeing with your team lead. Working from abroad needs HR approval for each stay.', src:'Example Handbook §5.2 Hybrid work'},
-      {re:/(expense|travel|reimburse|mileage|receipt)/i, a:'Submit expenses within <b>30 days</b> with receipts attached. Private car use is reimbursed at $0.30 per km.', src:'Example Handbook §7.1 Travel & expenses'},
-      {re:/(parental|maternity|paternity|baby|child)/i, a:'Parental leave follows the statutory rules. Notify HR at least <b>7 weeks</b> before the planned start so we can arrange cover.', src:'Example Handbook §4.6 Parental leave'},
-      {re:/(onboard|first day|laptop|new hire|equipment)/i, a:'New hires receive their laptop and accounts on <b>day one</b>. Your onboarding buddy and a 30-60-90 day plan are assigned in the HR portal.', src:'Example Handbook §2.1 Onboarding'}
-    ];
-    var chat = $('#chat', hr);
-    function say(cls, html){ var d = document.createElement('div'); d.className='msg '+cls; d.innerHTML = html; chat.appendChild(d); chat.scrollTop = chat.scrollHeight; return d; }
-    function ask(q){
-      q = q.trim(); if(!q) return;
-      say('me', esc(q));
-      var hit = KB.filter(function(k){ return k.re.test(q); })[0];
-      var d = say('bot', '');
-      var html = hit ? hit.a + '<span class="src">Source: '+hit.src+'</span>' :
-        'I could not find that in the employee handbook. I have forwarded your question to the HR team, who usually reply within one business day.<span class="src">Routed to: hr-team queue</span>';
-      setTimeout(function(){ typeInto(d, html, function(){ chat.scrollTop = chat.scrollHeight; }); }, 350);
-      $('#ask', hr).value = '';
-    }
-    $('#ask-go', hr).addEventListener('click', function(){ ask($('#ask', hr).value); });
-    $('#ask', hr).addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); ask(e.target.value); } });
-    hr.querySelectorAll('[data-q]').forEach(function(b){ b.addEventListener('click', function(){ ask(b.dataset.q); }); });
-    say('bot', 'Hi, I am the HR assistant. Ask me about leave, sickness, remote work, expenses or onboarding.<span class="src">Answers come from the example employee handbook</span>');
-  }
-  })();
-
-  (function(){
-  /* =================== FURNITURE SHOP =================== */
-  var shop = $('#demo-shop');
-  if(shop){
-    var P = [
-      {id:1, n:'Fjord 3-seat sofa', cat:'Sofas', price:1290, mat:'Linen', col:'#C9C2B4', w:212, r:4.8, d:'Deep seats, removable linen covers and solid oak legs.'},
-      {id:2, n:'Alba 2-seat sofa', cat:'Sofas', price:890, mat:'Velvet', col:'#2F6B66', w:168, r:4.6, d:'Compact velvet sofa that fits small living rooms.'},
-      {id:3, n:'Nook lounge chair', cat:'Chairs', price:540, mat:'Velvet', col:'#D9825F', w:78, r:4.9, d:'Wraparound shell with a soft velvet seat. Made for reading.'},
-      {id:4, n:'Hale dining chair', cat:'Chairs', price:189, mat:'Oak', col:'#C8A27A', w:46, r:4.7, d:'Light oak frame with a woven paper-cord seat.'},
-      {id:5, n:'Loop office chair', cat:'Chairs', price:420, mat:'Metal', col:'#3A4750', w:62, r:4.5, d:'Ergonomic office chair with adjustable lumbar support.'},
-      {id:6, n:'Grain dining table', cat:'Tables', price:980, mat:'Oak', col:'#C8A27A', w:200, r:4.8, d:'Solid oak table for six, oiled finish.'},
-      {id:7, n:'Rune coffee table', cat:'Tables', price:340, mat:'Walnut', col:'#7A5238', w:110, r:4.6, d:'Round walnut coffee table with a lower shelf.'},
-      {id:8, n:'Duo work desk', cat:'Tables', price:690, mat:'Oak', col:'#D2B48C', w:160, r:4.7, d:'Wide desk with cable tray. Room for two people.'},
-      {id:9, n:'Halo floor lamp', cat:'Lighting', price:229, mat:'Metal', col:'#E8C07A', w:40, r:4.8, d:'Dimmable arc lamp with a linen shade.'},
-      {id:10, n:'Ember table lamp', cat:'Lighting', price:119, mat:'Rattan', col:'#C49A5A', w:28, r:4.5, d:'Hand-woven rattan shade with a warm glow.'},
-      {id:11, n:'Stack shelf', cat:'Storage', price:460, mat:'Oak', col:'#C8A27A', w:90, r:4.7, d:'Modular open shelving, five levels.'},
-      {id:12, n:'Haven bed 160', cat:'Beds', price:1150, mat:'Walnut', col:'#7A5238', w:166, r:4.9, d:'Walnut bed frame with an upholstered headboard.'}
-    ];
-    var art = function(p){
-      var c = p.col, sh = 'rgba(14,27,34,.12)';
-      var body = {
-        Sofas:'<rect x="20" y="58" width="120" height="34" rx="10" fill="'+c+'"/><rect x="28" y="38" width="104" height="30" rx="10" fill="'+c+'" opacity=".85"/><rect x="14" y="52" width="18" height="40" rx="8" fill="'+c+'"/><rect x="128" y="52" width="18" height="40" rx="8" fill="'+c+'"/><rect x="30" y="92" width="6" height="12" fill="#8A6A4A"/><rect x="124" y="92" width="6" height="12" fill="#8A6A4A"/>',
-        Chairs:'<rect x="56" y="28" width="48" height="40" rx="12" fill="'+c+'"/><rect x="50" y="64" width="60" height="16" rx="7" fill="'+c+'" opacity=".9"/><path d="M58 80 52 106M102 80l6 26" stroke="#5A4A3A" stroke-width="4" stroke-linecap="round"/>',
-        Tables:'<rect x="22" y="48" width="116" height="10" rx="4" fill="'+c+'"/><path d="M34 58 30 104M126 58l4 46" stroke="'+c+'" stroke-width="7" stroke-linecap="round"/>',
-        Lighting:'<path d="M80 104V44" stroke="#3A4750" stroke-width="3"/><ellipse cx="80" cy="104" rx="22" ry="4" fill="#3A4750"/><path d="M58 44h44l-8-26H66z" fill="'+c+'"/><circle cx="80" cy="50" r="10" fill="#FFE6B0" opacity=".7"/>',
-        Storage:'<rect x="44" y="18" width="72" height="88" rx="3" fill="none" stroke="'+c+'" stroke-width="5"/><path d="M44 40h72M44 62h72M44 84h72" stroke="'+c+'" stroke-width="4"/><rect x="54" y="26" width="10" height="14" fill="#2F6B66"/><rect x="88" y="70" width="18" height="14" fill="#D9825F"/>',
-        Beds:'<rect x="18" y="60" width="124" height="28" rx="6" fill="'+c+'"/><rect x="18" y="34" width="20" height="54" rx="6" fill="'+c+'"/><rect x="40" y="52" width="96" height="14" rx="6" fill="#F3EEE6"/><rect x="44" y="44" width="26" height="12" rx="5" fill="#FFFFFF"/>'
-      }[p.cat];
-      return '<svg viewBox="0 0 160 120" aria-hidden="true"><ellipse cx="80" cy="108" rx="62" ry="6" fill="'+sh+'"/>'+body+'</svg>';
-    };
-    var money = function(n){ return '$' + n.toLocaleString('en-US'); };
-    var st = {cat:'All', mat:'All', max:1500, sort:'pop', q:''}, cart = [], ship = 'std', assembly = false, addr = {}, orderNo = 4100;
-    var grid = $('#s-grid', shop), panel = $('#s-panel', shop), scrim = $('#s-scrim', shop), lastFocus;
-    var byId = function(id){ return P.filter(function(p){ return p.id===id; })[0]; };
-    var count = function(){ return cart.reduce(function(a,x){ return a+x.qty; },0); };
-    var subtotal = function(){ return cart.reduce(function(a,x){ return a + byId(x.id).price*x.qty; },0); };
-    var shipCost = function(){ return ship==='exp' ? 89 : subtotal() >= 999 ? 0 : 49; };
-    var total = function(){ return subtotal() + shipCost() + (assembly ? 79 : 0); };
-    var bump = function(){ var b = $('#s-cartn', shop); b.textContent = count(); b.hidden = !count(); var btn = $('#s-cart', shop); btn.classList.remove('pop'); void btn.offsetWidth; btn.classList.add('pop'); };
-    var add = function(id, qty){ var it = cart.filter(function(x){ return x.id===id; })[0]; if(it) it.qty += qty||1; else cart.push({id:id, qty:qty||1}); bump(); };
-    var toastS = function(t){ var el = $('#s-toast', shop); el.textContent = t; el.classList.add('on'); clearTimeout(el._t); el._t = setTimeout(function(){ el.classList.remove('on'); }, 2200); };
-
-    function list(){
-      var L = P.filter(function(p){ return (st.cat==='All'||p.cat===st.cat) && (st.mat==='All'||p.mat===st.mat) && p.price<=st.max && (p.n+' '+p.cat+' '+p.mat).toLowerCase().indexOf(st.q.toLowerCase())>-1; });
-      if(st.sort==='low') L.sort(function(a,b){ return a.price-b.price; }); else if(st.sort==='high') L.sort(function(a,b){ return b.price-a.price; }); else L.sort(function(a,b){ return b.r-a.r; });
-      return L;
-    }
-    function renderGrid(){
-      var L = list();
-      $('#s-count', shop).textContent = L.length + ' product' + (L.length===1?'':'s');
-      grid.innerHTML = L.length ? L.map(function(p){
-        return '<article class="prod"><button type="button" class="prod-open" data-open="'+p.id+'" aria-label="View '+esc(p.n)+'"><span class="prod-art">'+art(p)+'</span></button>'+
-          '<div class="prod-info"><b>'+esc(p.n)+'</b><span>'+p.mat+' · '+p.w+' cm wide</span><div class="prod-row"><strong>'+money(p.price)+'</strong><span class="stars">★ '+p.r+'</span></div>'+
-          '<button type="button" class="btn btn-ink btn-sm" data-add="'+p.id+'">Add to cart</button></div></article>';
-      }).join('') : '<p class="empty" style="grid-column:1/-1">Nothing matches these filters. Raise the price limit or choose “All”.</p>';
-      shop.querySelectorAll('[data-cat]').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.cat===st.cat); });
-    }
-    function open(html, label){
-      if(panel.hidden) lastFocus = document.activeElement;
-      panel.innerHTML = '<button type="button" class="s-close" data-close aria-label="Close">×</button>' + html;
-      panel.setAttribute('aria-label', label); panel.hidden = false; scrim.hidden = false;
-      requestAnimationFrame(function(){ panel.classList.add('on'); scrim.classList.add('on'); var f = panel.querySelector('input, button:not(.s-close)'); (f || panel).focus(); });
-    }
-    function close(){
-      panel.classList.remove('on'); scrim.classList.remove('on');
-      setTimeout(function(){ panel.hidden = true; scrim.hidden = true; }, 220);
-      if(lastFocus) lastFocus.focus();
-    }
-    function detail(id){
-      var p = byId(id), pairs = P.filter(function(x){ return x.id!==p.id && x.cat!==p.cat && (x.mat===p.mat || x.cat==='Lighting'); }).slice(0,2);
-      open('<div class="pd-art">'+art(p)+'</div><h3>'+esc(p.n)+'</h3><p class="pd-meta">'+p.cat+' · '+p.mat+' · '+p.w+' cm wide · ★ '+p.r+'</p><p>'+esc(p.d)+'</p>'+
-        '<div class="pd-buy"><strong>'+money(p.price)+'</strong><label for="pd-q" class="qty">Qty<select id="pd-q">'+[1,2,3,4].map(function(n){ return '<option>'+n+'</option>'; }).join('')+'</select></label><button type="button" class="btn btn-ink" data-addq="'+p.id+'">Add to cart</button></div>'+
-        '<div class="ai-box"><div class="ai-h">Pairs well with</div>'+pairs.map(function(x){ return '<div class="pair"><span>'+art(x)+'</span><div><b>'+esc(x.n)+'</b><br>'+money(x.price)+'</div><button type="button" class="btn btn-ghost btn-sm" data-add="'+x.id+'">Add</button></div>'; }).join('')+'</div>', p.n);
-    }
-    function cartView(){
-      if(!cart.length){ open('<h3>Your cart</h3><p class="empty">Your cart is empty. Add something you like, or ask the AI advisor for ideas.</p><button type="button" class="btn btn-ink" data-close>Keep shopping</button>', 'Cart'); return; }
-      open('<h3>Your cart</h3><ul class="cart">'+cart.map(function(x){ var p = byId(x.id);
-          return '<li><span class="c-art">'+art(p)+'</span><div><b>'+esc(p.n)+'</b><span>'+money(p.price)+'</span></div><div class="stepper"><button type="button" data-dec="'+p.id+'" aria-label="One less">−</button><span aria-live="polite">'+x.qty+'</span><button type="button" data-inc="'+p.id+'" aria-label="One more">+</button></div><button type="button" class="c-rm" data-rm="'+p.id+'" aria-label="Remove '+esc(p.n)+'">Remove</button></li>'; }).join('')+'</ul>'+
-        sums()+'<button type="button" class="btn btn-ink" style="width:100%" data-step="1">Checkout <span class="arr">→</span></button>', 'Cart');
-    }
-    function sums(){
-      var sc = shipCost();
-      return '<dl class="sums"><div><dt>Subtotal</dt><dd>'+money(subtotal())+'</dd></div><div><dt>Delivery</dt><dd>'+(sc?money(sc):'Free')+'</dd></div>'+(assembly?'<div><dt>Assembly</dt><dd>'+money(79)+'</dd></div>':'')+'<div class="tot"><dt>Total</dt><dd>'+money(total())+'</dd></div></dl>'+
-        (subtotal()<999 && ship==='std' ? '<p class="note">Add '+money(999-subtotal())+' more for free standard delivery.</p>' : '');
-    }
-    var stepsBar = function(n){ return '<ol class="co-steps">'+['Address','Delivery','Review'].map(function(t,i){ return '<li class="'+(i+1<n?'done':i+1===n?'cur':'')+'">'+t+'</li>'; }).join('')+'</ol>'; };
-    function step(n){
-      if(n===1){
-        open(stepsBar(1)+'<h3>Delivery address</h3><form id="co-a" class="co" novalidate><label for="co-n">Full name<input id="co-n" autocomplete="name" value="'+esc(addr.n||'')+'"></label><label for="co-s">Street and number<input id="co-s" autocomplete="street-address" value="'+esc(addr.s||'')+'"></label><div class="row2"><label for="co-z">Postal code<input id="co-z" autocomplete="postal-code" value="'+esc(addr.z||'')+'"></label><label for="co-c">City<input id="co-c" autocomplete="address-level2" value="'+esc(addr.c||'')+'"></label></div><p class="note" id="co-e" role="status"></p><button class="btn btn-ink" type="submit">Continue to delivery <span class="arr">→</span></button><button class="btn btn-ghost" type="button" data-cartv>Back to cart</button></form>', 'Checkout: address');
-      } else if(n===2){
-        var opt = function(v, t, s, p){ return '<label class="radio"><input type="radio" name="ship" value="'+v+'"'+(ship===v?' checked':'')+'><span><b>'+t+'</b><small>'+s+'</small></span><em>'+p+'</em></label>'; };
-        open(stepsBar(2)+'<h3>Delivery</h3><div class="co">'+opt('std','Standard delivery','5–7 working days, to your door', subtotal()>=999?'Free':money(49))+opt('exp','Express delivery','2–3 working days, choose a time slot', money(89))+
-          '<label class="chk big"><input type="checkbox" id="co-asm"'+(assembly?' checked':'')+'> <span><b>Assembly service</b><small>Our team assembles everything and takes the packaging away. +'+money(79)+'</small></span></label>'+
-          '<div class="ai-box"><div class="ai-h">AI delivery estimate</div>Based on stock and your postal code '+esc(addr.z)+', everything can arrive in <b>one delivery</b> '+(ship==='exp'?'within 3 working days':'within 6 working days')+'.</div>'+
-          '<button class="btn btn-ink" type="button" data-step="3">Review order <span class="arr">→</span></button><button class="btn btn-ghost" type="button" data-step="1">Back</button></div>', 'Checkout: delivery');
-      } else if(n===3){
-        open(stepsBar(3)+'<h3>Review and place order</h3><div class="co"><div class="rev"><b>Deliver to</b><span>'+esc(addr.n)+', '+esc(addr.s)+', '+esc(addr.z)+' '+esc(addr.c)+'</span></div>'+
-          '<div class="rev"><b>Items</b><span>'+cart.map(function(x){ return x.qty+' × '+esc(byId(x.id).n); }).join('<br>')+'</span></div>'+sums()+
-          '<label class="radio"><input type="radio" checked name="pay"><span><b>Demo payment</b><small>No real payment is taken in this demo.</small></span></label>'+
-          '<button class="btn btn-ink" type="button" data-place>Place order · '+money(total())+'</button><button class="btn btn-ghost" type="button" data-step="2">Back</button></div>', 'Checkout: review');
-      }
-    }
-    function placed(){
-      var no = 'LL-' + (orderNo++), items = count(), tot = total();
-      cart = []; bump();
-      open('<div class="done-ico">'+'<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22" fill="var(--teal-soft)"/><path d="m15 24.5 6 6 12-13" fill="none" stroke="var(--teal)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>'+'</div><h3>Thank you, '+esc((addr.n||'').split(' ')[0])+'!</h3><p>Order <b>'+no+'</b> is confirmed: '+items+' item'+(items>1?'s':'')+', '+money(tot)+'.</p>'+
-        '<div class="ai-box"><div class="ai-h">What happens next</div><ul><li>Confirmation email with your invoice</li><li>Delivery slot by text message the day before</li><li>'+(assembly?'Assembly team arrives with the delivery':'Assembly instructions and video in your account')+'</li></ul></div><button type="button" class="btn btn-ink" data-close>Continue shopping</button>', 'Order confirmed');
-      ship = 'std'; assembly = false;
-    }
-
-    /* AI room advisor */
-    function advise(q){
-      var budget = (q.match(/(?:\$|€|usd|eur|under|below|max)\s*([\d.,]+)/i) || q.match(/([\d.,]{3,})\s*(?:\$|€|usd|eur)/i) || [])[1];
-      budget = budget ? parseInt(budget.replace(/[.,]/g,''),10) : 2500;
-      var want = [], why = [];
-      var pick = function(cat, pref){ var c = P.filter(function(p){ return p.cat===cat && want.indexOf(p)<0; }); if(pref) c.sort(function(a,b){ return (pref(b)?1:0)-(pref(a)?1:0); }); return c; };
-      var light = /light|bright|scandi|nordic|oak/i.test(q), dark = /dark|walnut|warm/i.test(q), small = /small|compact|tiny|studio|apartment/i.test(q), cozy = /cozy|cosy|reading|relax/i.test(q);
-      var matPref = function(p){ return (light && p.mat==='Oak') || (dark && p.mat==='Walnut') || (cozy && (p.mat==='Velvet'||p.mat==='Linen')); };
-      var plan = /office|desk|work/i.test(q) ? ['Tables','Chairs','Lighting'] : /bed|sleep/i.test(q) ? ['Beds','Lighting','Storage'] : /dining|eat|kitchen/i.test(q) ? ['Tables','Chairs','Lighting'] : cozy ? ['Chairs','Lighting','Tables'] : ['Sofas','Tables','Lighting'];
-      plan.forEach(function(cat){
-        var c = pick(cat, function(p){ return matPref(p) || (small && p.w < 180) || (cat==='Tables' && /office|desk/i.test(q) && p.n.indexOf('desk')>-1) || (cat==='Chairs' && /office|desk/i.test(q) && p.n.indexOf('office')>-1); });
-        var spent = want.reduce(function(a,p){ return a+p.price; },0);
-        var fit = c.filter(function(p){ return spent + p.price <= budget; });
-        if(fit.length) want.push(fit[0]);
-      });
-      if(small) why.push('pieces under 180 cm wide for a small room');
-      if(light) why.push('light oak and natural tones');
-      if(dark) why.push('warm walnut');
-      if(cozy) why.push('soft fabrics and a warm lamp');
-      var sum = want.reduce(function(a,p){ return a+p.price; },0);
-      return {items:want, why:why, sum:sum, budget:budget};
-    }
-    function showAdvice(q){
-      var out = $('#s-ai-out', shop), a = advise(q);
-      if(!a.items.length){ out.innerHTML = '<div class="ai-box"><div class="ai-h">AI advisor</div>Nothing fits a budget of '+money(a.budget)+'. Try a higher budget.</div>'; return; }
-      out.innerHTML = '<div class="ai-box advice"><div class="ai-h">AI advisor · a set for your room</div><p>I picked '+(a.why.length?a.why.join(', '):'our best-rated pieces')+'. Total <b>'+money(a.sum)+'</b>'+(a.budget!==2500?' of your '+money(a.budget)+' budget':'')+'.</p><div class="adv-row">'+
-        a.items.map(function(p){ return '<button type="button" class="adv" data-open="'+p.id+'"><span>'+art(p)+'</span><b>'+esc(p.n)+'</b><small>'+money(p.price)+'</small></button>'; }).join('')+
-        '</div><button type="button" class="btn btn-ink btn-sm" data-addset="'+a.items.map(function(p){return p.id;}).join(',')+'">Add all '+a.items.length+' to cart · '+money(a.sum)+'</button></div>';
-    }
-
-    /* events */
-    shop.addEventListener('click', function(e){
-      var t = e.target.closest('button, [data-close]'); if(!t || !shop.contains(t)) return;
-      if(t.dataset.cat){ st.cat = t.dataset.cat; renderGrid(); return; }
-      if(t.dataset.add){ add(+t.dataset.add); toastS(byId(+t.dataset.add).n + ' added to cart'); return; }
-      if(t.dataset.addq){ add(+t.dataset.addq, +$('#pd-q', shop).value); toastS('Added to cart'); close(); return; }
-      if(t.dataset.addset){ t.dataset.addset.split(',').forEach(function(id){ add(+id); }); toastS('Set added to cart'); return; }
-      if(t.dataset.open){ detail(+t.dataset.open); return; }
-      if(t.id==='s-cart' || t.hasAttribute('data-cartv')){ cartView(); return; }
-      if(t.hasAttribute('data-close')){ close(); return; }
-      if(t.dataset.inc||t.dataset.dec||t.dataset.rm){
-        var id = +(t.dataset.inc||t.dataset.dec||t.dataset.rm), it = cart.filter(function(x){ return x.id===id; })[0];
-        if(t.dataset.inc) it.qty++; else if(t.dataset.dec) it.qty--; if(t.dataset.rm || it.qty<1) cart = cart.filter(function(x){ return x.id!==id; });
-        bump(); cartView(); return;
-      }
-      if(t.dataset.step){ step(+t.dataset.step); return; }
-      if(t.hasAttribute('data-place')){ placed(); return; }
-      if(t.dataset.ask!=null){ $('#s-ai-q', shop).value = t.textContent; showAdvice(t.textContent); return; }
-    });
-    shop.addEventListener('change', function(e){
-      var t = e.target;
-      if(t.id==='s-mat'){ st.mat = t.value; renderGrid(); }
-      if(t.id==='s-sort'){ st.sort = t.value; renderGrid(); }
-      if(t.name==='ship'){ ship = t.value; step(2); }
-      if(t.id==='co-asm'){ assembly = t.checked; }
-    });
-    shop.addEventListener('input', function(e){
-      var t = e.target;
-      if(t.id==='s-max'){ st.max = +t.value; $('#s-maxv', shop).textContent = money(st.max); renderGrid(); }
-      if(t.id==='s-q'){ st.q = t.value; renderGrid(); }
-    });
-    shop.addEventListener('submit', function(e){
-      e.preventDefault();
-      if(e.target.id==='s-ai'){ var q = $('#s-ai-q', shop).value.trim(); if(q) showAdvice(q); else $('#s-ai-q', shop).focus(); }
-      if(e.target.id==='co-a'){
-        var f = {n:$('#co-n',shop).value.trim(), s:$('#co-s',shop).value.trim(), z:$('#co-z',shop).value.trim(), c:$('#co-c',shop).value.trim()}, er = $('#co-e', shop);
-        var miss = !f.n ? ['co-n','Add your full name.'] : !f.s ? ['co-s','Add the street and house number.'] : !/^\w{3,10}$/.test(f.z.replace(/\s/g,'')) ? ['co-z','Enter a valid postal code.'] : !f.c ? ['co-c','Add your city.'] : null;
-        if(miss){ er.className='note err'; er.textContent = miss[1]; var el = $('#'+miss[0], shop); el.setAttribute('aria-invalid','true'); el.focus(); return; }
-        addr = f; step(2);
-      }
-    });
-    shop.addEventListener('keydown', function(e){ if(e.key==='Escape' && !panel.hidden) close(); });
-    scrim.addEventListener('click', close);
-    renderGrid();
-    showAdvice('Small living room, light wood, under $1,500');
-  }
-  })();
-
+/* Field Service & Proof Of Delivery demo. All data is fictional example data. */
+(function(){
+  var $ = SDA.$, esc = SDA.esc, usd = SDA.usd, typeInto = SDA.typeInto;
   (function(){
   /* =================== FIELD SERVICE & PROOF OF DELIVERY =================== */
   var fld = $('#demo-field');
@@ -902,158 +787,219 @@
     renderPhone(); renderOffice();
   }
   })();
+})();
 
+/* Facility Management demo. All data is fictional example data. */
+(function(){
+  var $ = SDA.$, esc = SDA.esc, usd = SDA.usd, typeInto = SDA.typeInto;
   (function(){
-  /* =================== CAR DEALER MARKETPLACE =================== */
-  var car = $('#demo-car');
-  if(car){
-    var C = [
-      {id:1, make:'Volkswagen', model:'ID.4 Pro', year:2023, km:18500, fuel:'Electric', gear:'Automatic', hp:204, price:36900, market:38600, body:'SUV', col:'#2F5D8A', seats:5, feat:['Heat pump','Adaptive cruise','Wireless CarPlay','Range 520 km']},
-      {id:2, make:'BMW', model:'320d Touring', year:2021, km:54200, fuel:'Diesel', gear:'Automatic', hp:190, price:29900, market:30400, body:'Estate', col:'#1E2A33', seats:5, feat:['M Sport package','LED headlights','Tow bar','Parking assistant']},
-      {id:3, make:'Toyota', model:'Corolla Hybrid', year:2022, km:31800, fuel:'Hybrid', gear:'Automatic', hp:140, price:22400, market:23900, body:'Hatchback', col:'#C8CDD2', seats:5, feat:['Lane keeping','Reversing camera','Keyless entry','5-year warranty']},
-      {id:4, make:'Tesla', model:'Model 3 Long Range', year:2022, km:42000, fuel:'Electric', gear:'Automatic', hp:351, price:31900, market:31500, body:'Sedan', col:'#B3262E', seats:5, feat:['Autopilot','Glass roof','Premium audio','Range 600 km']},
-      {id:5, make:'Skoda', model:'Octavia Combi', year:2020, km:78900, fuel:'Petrol', gear:'Manual', hp:150, price:16900, market:17800, body:'Estate', col:'#4E7A5A', seats:5, feat:['Navigation','Heated seats','Large boot 640 l','Full service history']},
-      {id:6, make:'Audi', model:'Q5 40 TDI quattro', year:2021, km:61500, fuel:'Diesel', gear:'Automatic', hp:204, price:37500, market:36200, body:'SUV', col:'#6B7176', seats:5, feat:['All-wheel drive','Virtual cockpit','Matrix LED','Panorama roof']},
-      {id:7, make:'Hyundai', model:'Ioniq 5', year:2023, km:12400, fuel:'Electric', gear:'Automatic', hp:229, price:39900, market:41900, body:'SUV', col:'#D8D2C4', seats:5, feat:['800 V fast charging','Heat pump','Vehicle-to-load','Range 480 km']},
-      {id:8, make:'Ford', model:'Fiesta ST-Line', year:2019, km:48300, fuel:'Petrol', gear:'Manual', hp:100, price:11900, market:12200, body:'Hatchback', col:'#E0663F', seats:5, feat:['Sport seats','Apple CarPlay','Cruise control','Low running costs']},
-      {id:9, make:'Mercedes-Benz', model:'C 300 e', year:2022, km:27600, fuel:'Hybrid', gear:'Automatic', hp:313, price:42900, market:44100, body:'Sedan', col:'#ECEDEE', seats:5, feat:['Plug-in hybrid','Burmester audio','Ambient lighting','MBUX assistant']},
-      {id:10, make:'Volvo', model:'XC40 Recharge', year:2021, km:39800, fuel:'Electric', gear:'Automatic', hp:231, price:30900, market:32300, body:'SUV', col:'#3B4C5C', seats:5, feat:['Google built-in','360° camera','Pilot assist','Range 420 km']}
-    ];
-    var draw = function(c){
-      var k = c.col, glass = '#BFD3DD', w = '<circle cx="46" cy="86" r="11" fill="#1B232A"/><circle cx="46" cy="86" r="5" fill="#9AA6AE"/><circle cx="134" cy="86" r="11" fill="#1B232A"/><circle cx="134" cy="86" r="5" fill="#9AA6AE"/>';
-      var b = {
-        SUV:'<path d="M18 80 V62 Q20 54 30 52 L52 36 Q58 32 66 32 H122 Q132 32 138 40 L150 52 Q164 54 166 64 V80 Z" fill="'+k+'"/><path d="M58 40 H90 V54 H44 Z M96 40 H124 L136 54 H96 Z" fill="'+glass+'"/>',
-        Sedan:'<path d="M14 80 V66 Q16 58 30 56 L56 40 Q64 36 74 36 H112 Q122 36 130 44 L144 56 Q164 58 166 68 V80 Z" fill="'+k+'"/><path d="M62 44 H90 V56 H48 Z M96 44 H118 Q124 44 128 50 L134 56 H96 Z" fill="'+glass+'"/>',
-        Hatchback:'<path d="M22 80 V64 Q24 56 34 54 L56 38 Q62 34 70 34 H118 Q126 34 132 42 L146 58 Q158 60 158 68 V80 Z" fill="'+k+'"/><path d="M62 42 H90 V56 H46 Z M96 42 H120 L134 56 H96 Z" fill="'+glass+'"/>',
-        Estate:'<path d="M14 80 V64 Q16 56 28 54 L50 38 Q56 34 64 34 H150 Q158 34 160 44 L164 58 Q168 62 168 68 V80 Z" fill="'+k+'"/><path d="M56 42 H88 V56 H42 Z M94 42 H124 V56 H94 Z M130 42 H152 L156 56 H130 Z" fill="'+glass+'"/>'
-      }[c.body];
-      return '<svg viewBox="0 0 180 104" aria-hidden="true"><ellipse cx="90" cy="96" rx="78" ry="5" fill="rgba(14,27,34,.12)"/>'+b+'<rect x="18" y="68" width="10" height="4" rx="2" fill="#FFE6A8"/>'+w+'</svg>';
+  /* =================== FACILITY MANAGEMENT =================== */
+  var fac = $('#demo-facility');
+  if(fac){
+    var R = {
+      lobby:{n:'Lobby', t:21.4}, meetA:{n:'Meeting A', t:22.0}, meetB:{n:'Meeting B', t:24.8}, kitchen:{n:'Kitchen', t:22.3},
+      east:{n:'Office East', t:21.8}, west:{n:'Office West', t:22.1}, server:{n:'Server room', t:27.9}, wc:{n:'Restrooms', t:21.0},
+      stairs:{n:'Stairs', t:20.4}, wh:{n:'Warehouse', t:17.6}, dock:{n:'Loading dock', t:15.2}
     };
-    var money = function(n){ return '$' + Math.round(n).toLocaleString('en-US'); };
-    var kmf = function(n){ return n.toLocaleString('en-US') + ' km'; };
-    var rating = function(c){ var d = c.market - c.price; return d >= 1200 ? ['Great price','p-ok'] : d >= 0 ? ['Fair price','p-info'] : ['Above market','p-warn']; };
-    var f = {make:'All', body:'All', fuel:'All', max:45000, kmMax:100000, sort:'best'}, saved = [], cmp = [], reserved = [], lastF;
-    var grid = $('#c-grid', car), panel = $('#c-panel', car), scrim = $('#c-scrim', car);
-    var byId = function(id){ return C.filter(function(c){ return c.id===id; })[0]; };
-    var toastC = function(t){ var el = $('#c-toast', car); el.textContent = t; el.classList.add('on'); clearTimeout(el._t); el._t = setTimeout(function(){ el.classList.remove('on'); }, 2400); };
-    function topCounts(){ $('#c-savedn', car).textContent = saved.length; $('#c-cmpn', car).textContent = cmp.length; $('#c-cmpbtn', car).disabled = cmp.length < 2; }
-    function list(){
-      var L = C.filter(function(c){ return (f.make==='All'||c.make===f.make) && (f.body==='All'||c.body===f.body) && (f.fuel==='All'||c.fuel===f.fuel) && c.price<=f.max && c.km<=f.kmMax; });
-      var s = {best:function(a,b){ return (b.market-b.price)-(a.market-a.price); }, low:function(a,b){ return a.price-b.price; }, km:function(a,b){ return a.km-b.km; }, new:function(a,b){ return b.year-a.year; }}[f.sort];
-      return L.sort(s);
+    var T = [
+      {id:'FM-1041', room:'server', txt:'Server room temperature above threshold', cat:'HVAC', pri:'Critical', team:'HVAC contractor', st:'Dispatched'},
+      {id:'FM-1040', room:'meetB', txt:'Projector not turning on', cat:'IT / AV', pri:'Medium', team:'IT service desk', st:'Open'}
+    ];
+    var RULES = [
+      {cat:'HVAC', re:/(hot|cold|temperat|heat|air ?con|hvac|ventilat|warm|stuffy)/i, team:'HVAC contractor'},
+      {cat:'Plumbing', re:/(leak|water|tap|toilet|drain|flood|pipe|drip)/i, team:'Plumbing team'},
+      {cat:'Electrical', re:/(light|power|socket|electric|outage|flicker|lamp|breaker)/i, team:'Electrician'},
+      {cat:'IT / AV', re:/(wifi|wi-fi|network|projector|screen|printer|internet|display|beamer)/i, team:'IT service desk'},
+      {cat:'Security', re:/(door|lock|badge|access|alarm|camera|window broken)/i, team:'Security'},
+      {cat:'Cleaning', re:/(clean|spill|dirty|trash|bin|smell|mess)/i, team:'Cleaning crew'}
+    ];
+    var ROOMWORDS = {lobby:/lobby|entrance|reception/i, meetA:/meeting ?a|room a/i, meetB:/meeting ?b|room b/i, kitchen:/kitchen|coffee|canteen/i, east:/east/i, west:/west/i, server:/server/i, wc:/restroom|toilet|wc|bathroom/i, stairs:/stair/i, wh:/warehouse|storage/i, dock:/dock|loading/i};
+    var next = 1042;
+    var priCls = {Critical:'p-bad', High:'p-warn', Medium:'p-info', Low:'p-ok'};
+    function roomState(k){
+      var open = T.filter(function(t){ return t.room===k && t.st!=='Resolved'; });
+      if(open.some(function(t){ return t.pri==='Critical'||t.pri==='High'; })) return 'bad';
+      if(open.length || R[k].t>24.5 || R[k].t<16) return 'warn';
+      return '';
     }
-    function renderGrid(){
-      var L = list();
-      $('#c-count', car).textContent = L.length + ' car' + (L.length===1?'':'s') + ' in stock';
-      grid.innerHTML = L.length ? L.map(function(c){ var r = rating(c), sv = saved.indexOf(c.id)>-1, cp = cmp.indexOf(c.id)>-1, rs = reserved.indexOf(c.id)>-1;
-        return '<article class="car"><button type="button" class="car-art" data-open="'+c.id+'" aria-label="View '+esc(c.make+' '+c.model)+'">'+draw(c)+(rs?'<span class="pill p-warn car-res">Reserved</span>':'')+'</button>'+
-          '<button type="button" class="heart'+(sv?' on':'')+'" data-save="'+c.id+'" aria-pressed="'+sv+'" aria-label="Save '+esc(c.make+' '+c.model)+'"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button>'+
-          '<div class="car-info"><span class="pill '+r[1]+'">'+r[0]+'</span><b>'+esc(c.make)+' '+esc(c.model)+'</b><span class="car-spec">'+c.year+' · '+kmf(c.km)+' · '+c.fuel+' · '+c.gear+'</span>'+
-          '<div class="car-row"><strong>'+money(c.price)+'</strong><span>or '+money(rate(c.price, c.price*.2, 48))+'/mo</span></div>'+
-          '<label class="chk cmp"><input type="checkbox" data-cmp="'+c.id+'"'+(cp?' checked':'')+'> Compare</label></div></article>'; }).join('')
-        : '<p class="empty" style="grid-column:1/-1">No cars match. Raise the price or mileage limit, or set the filters back to All.</p>';
-      car.querySelectorAll('[data-body]').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.body===f.body); });
+    function renderPlan(sel){
+      $('#fplan', fac).innerHTML = Object.keys(R).map(function(k){
+        return '<button type="button" class="room r-'+k+' '+roomState(k)+(sel===k?' sel flash':'')+'" data-k="'+k+'">'+R[k].n+'<small>'+R[k].t.toFixed(1)+' °C</small></button>';
+      }).join('');
     }
-    function rate(price, down, months){ var p = Math.max(0, price-down), i = 0.049/12; return p ? p*i/(1-Math.pow(1+i,-months)) : 0; }
-    function open(html, label){ if(panel.hidden) lastF = document.activeElement; panel.innerHTML = '<button type="button" class="s-close" data-close aria-label="Close">×</button>'+html; panel.setAttribute('aria-label', label); panel.hidden = false; scrim.hidden = false; requestAnimationFrame(function(){ panel.classList.add('on'); scrim.classList.add('on'); (panel.querySelector('input,select,button:not(.s-close)')||panel).focus(); }); }
-    function close(){ panel.classList.remove('on'); scrim.classList.remove('on'); setTimeout(function(){ panel.hidden = true; scrim.hidden = true; }, 220); if(lastF) lastF.focus(); }
-    function detail(id){
-      var c = byId(id), r = rating(c), d = c.market - c.price;
-      open('<div class="pd-art car-big">'+draw(c)+'</div><span class="pill '+r[1]+'">'+r[0]+'</span><h3 style="margin-top:8px">'+esc(c.make+' '+c.model)+'</h3>'+
-        '<dl class="specs"><div><dt>First registration</dt><dd>'+c.year+'</dd></div><div><dt>Mileage</dt><dd>'+kmf(c.km)+'</dd></div><div><dt>Fuel</dt><dd>'+c.fuel+'</dd></div><div><dt>Gearbox</dt><dd>'+c.gear+'</dd></div><div><dt>Power</dt><dd>'+c.hp+' hp</dd></div><div><dt>Body</dt><dd>'+c.body+'</dd></div></dl>'+
-        '<ul class="feat">'+c.feat.map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+'</ul>'+
-        '<div class="ai-box"><div class="ai-h">AI price analysis</div>'+(d>=0 ? 'This car is <b>'+money(d)+' below</b> the market average of '+money(c.market)+' for comparable '+c.make+' '+c.model.split(' ')[0]+' models with similar mileage.' : 'This car is <b>'+money(-d)+' above</b> the market average, explained by low mileage and extra equipment.')+'</div>'+
-        '<div class="fin"><b>Financing</b><label for="fin-d">Down payment <span id="fin-dv">'+money(c.price*.2)+'</span><input type="range" id="fin-d" min="0" max="'+Math.round(c.price*.6)+'" step="500" value="'+Math.round(c.price*.2/500)*500+'"></label>'+
-        '<label for="fin-t">Term<select id="fin-t"><option>24</option><option>36</option><option selected>48</option><option>60</option></select></label>'+
-        '<p class="fin-rate"><span id="fin-r">'+money(rate(c.price, c.price*.2, 48))+'</span> per month · 4.9% APR</p></div>'+
-        '<div class="pd-buy"><strong>'+money(c.price)+'</strong></div><div class="co"><button type="button" class="btn btn-ink" data-td="'+c.id+'">Book a test drive</button><button type="button" class="btn btn-ghost" data-res="'+c.id+'"'+(reserved.indexOf(c.id)>-1?' disabled':'')+'>'+(reserved.indexOf(c.id)>-1?'Reserved for you':'Reserve for 48 hours')+'</button></div>', c.make+' '+c.model);
-      panel.dataset.car = c.id;
+    function renderTickets(){
+      $('#fm-list', fac).innerHTML = T.map(function(t){
+        return '<div class="ticket"><span class="id">'+t.id+'</span><div><b>'+esc(t.txt)+'</b><div class="meta">'+R[t.room].n+' · '+t.cat+' · '+t.team+' · '+t.st+'</div>'+(t.st!=='Resolved'?'<div class="btn-row" style="margin-top:8px">'+(t.st==='Open'?'<button type="button" class="btn btn-ghost btn-sm" data-tk="'+t.id+'" data-to="Dispatched">Dispatch team</button>':'')+'<button type="button" class="btn btn-ink btn-sm" data-tk="'+t.id+'" data-to="Resolved">Mark resolved</button></div>':'')+'</div><span class="pill '+(t.st==='Resolved'?'p-ok':priCls[t.pri])+'">'+(t.st==='Resolved'?'Resolved':t.pri)+'</span></div>';
+      }).join('');
+      var open = T.filter(function(t){return t.st!=='Resolved';});
+      $('#fk-open', fac).textContent = open.length;
+      $('#fk-crit', fac).textContent = open.filter(function(t){return t.pri==='Critical';}).length;
     }
-    function days(){ var out = [], d = new Date(); for(var i=1;i<=7;i++){ var x = new Date(d); x.setDate(d.getDate()+i); if(x.getDay()!==0) out.push(x.toLocaleDateString('en-GB',{weekday:'short', day:'numeric', month:'short'})); } return out; }
-    function testDrive(id){
-      var c = byId(id);
-      open('<h3>Book a test drive</h3><p>'+esc(c.make+' '+c.model)+' · '+money(c.price)+'</p><form id="td-f" class="co" novalidate style="margin-top:12px"><label for="td-n">Name<input id="td-n" autocomplete="name"></label><label for="td-e">Email<input id="td-e" type="email" autocomplete="email"></label>'+
-        '<label for="td-d">Day<select id="td-d">'+days().map(function(x){ return '<option>'+x+'</option>'; }).join('')+'</select></label><fieldset class="slots"><legend>Time</legend>'+['09:00','11:00','14:00','16:30'].map(function(t,i){ return '<label class="radio"><input type="radio" name="td-t" value="'+t+'"'+(i===1?' checked':'')+'><span><b>'+t+'</b></span></label>'; }).join('')+'</fieldset>'+
-        '<label class="chk big"><input type="checkbox" id="td-ti"> <span><b>I have a car to trade in</b><small>We prepare a valuation for the appointment.</small></span></label><p class="note" id="td-err" role="status"></p><button class="btn btn-ink" type="submit">Confirm test drive</button><button class="btn btn-ghost" type="button" data-open="'+c.id+'">Back to the car</button></form>', 'Book a test drive');
-      panel.dataset.car = c.id;
+    function triage(text){
+      var rule = RULES.filter(function(r){ return r.re.test(text); })[0] || {cat:'General', team:'Facility manager'};
+      var room = Object.keys(ROOMWORDS).filter(function(k){ return ROOMWORDS[k].test(text); })[0] || 'lobby';
+      var pri = /(flood|fire|smoke|outage|alarm|urgent|server|danger|broken window)/i.test(text) ? 'Critical' :
+                /(leak|no power|not working|broken|stuck)/i.test(text) ? 'High' :
+                /(clean|smell|bin|flicker)/i.test(text) ? 'Low' : 'Medium';
+      var eta = {Critical:'within 1 hour', High:'today', Medium:'within 2 business days', Low:'next scheduled round'}[pri];
+      return {cat:rule.cat, team:rule.team, room:room, pri:pri, eta:eta};
     }
-    function compare(){
-      var L = cmp.map(byId), rows = [['Price',function(c){ return money(c.price); }],['Year',function(c){ return c.year; }],['Mileage',function(c){ return kmf(c.km); }],['Fuel',function(c){ return c.fuel; }],['Power',function(c){ return c.hp+' hp'; }],['Price rating',function(c){ return rating(c)[0]; }],['Monthly (48 mo)',function(c){ return money(rate(c.price,c.price*.2,48)); }]];
-      var best = L.slice().sort(function(a,b){ return (b.market-b.price)/b.market*100 - b.km/20000 - ((a.market-a.price)/a.market*100 - a.km/20000); })[0];
-      open('<h3>Compare cars</h3><div class="cmp-wrap"><table class="cmp-t"><thead><tr><th></th>'+L.map(function(c){ return '<th>'+draw(c)+'<b>'+esc(c.make+' '+c.model)+'</b></th>'; }).join('')+'</tr></thead><tbody>'+
-        rows.map(function(r){ return '<tr><th>'+r[0]+'</th>'+L.map(function(c){ return '<td>'+r[1](c)+'</td>'; }).join('')+'</tr>'; }).join('')+'</tbody></table></div>'+
-        '<div class="ai-box"><div class="ai-h">AI recommendation</div>The <b>'+esc(best.make+' '+best.model)+'</b> gives the best value: '+(best.market-best.price>=0?money(best.market-best.price)+' under market price':'well equipped')+' with '+kmf(best.km)+'.</div><button type="button" class="btn btn-ink" style="width:100%;margin-top:12px" data-open="'+best.id+'">View the '+esc(best.model)+'</button>', 'Compare cars');
+    function submit(text){
+      text = text.trim(); var out = $('#fm-ai', fac);
+      if(!text){ out.innerHTML = '<p>Describe the problem first, for example “Water leaking under the sink in the kitchen”.</p>'; return; }
+      var r = triage(text), id = 'FM-'+(next++);
+      T.unshift({id:id, room:r.room, txt:text, cat:r.cat, pri:r.pri, team:r.team, st:'Open'});
+      renderTickets(); renderPlan(r.room);
+      typeInto(out, '<p>Created <b>'+id+'</b>.</p><ul><li>Location: <b>'+R[r.room].n+'</b></li><li>Category: <b>'+r.cat+'</b></li><li>Priority: <b>'+r.pri+'</b>, response '+r.eta+'</li><li>Assigned to: <b>'+r.team+'</b></li></ul>'+(r.cat==='Plumbing'?'<p style="margin-top:6px">Tip sent to reporter: close the local shut-off valve if safe to do so.</p>':''));
+      $('#fm-text', fac).value = '';
     }
-    function tradeIn(){
-      open('<h3>What is my car worth?</h3><p>Get an instant AI estimate. We confirm the price at the inspection.</p><form id="ti-f" class="co" novalidate style="margin-top:12px"><div class="row2"><label for="ti-m">Make<input id="ti-m" placeholder="e.g. Volkswagen"></label><label for="ti-mo">Model<input id="ti-mo" placeholder="e.g. Golf"></label></div>'+
-        '<div class="row2"><label for="ti-y">Year<select id="ti-y">'+[2024,2023,2022,2021,2020,2019,2018,2017,2016,2015].map(function(y){ return '<option>'+y+'</option>'; }).join('')+'</select></label><label for="ti-k">Mileage (km)<input id="ti-k" type="number" min="0" step="1000" placeholder="e.g. 65000"></label></div>'+
-        '<label for="ti-c">Condition<select id="ti-c"><option value="1.06">Very good</option><option value="1" selected>Good</option><option value=".88">Fair</option></select></label><p class="note" id="ti-err" role="status"></p><button class="btn btn-ink" type="submit">Get my estimate</button></form><div id="ti-out"></div>', 'Trade-in valuation');
-    }
-    function aiSearch(q){
-      var o = {make:'All', body:'All', fuel:'All', max:45000, kmMax:100000, sort:'best'}, why = [];
-      var m = q.match(/(?:under|below|max|up to|\$|€)\s*[$€]?\s*([\d.,]+)\s*(k)?/i); if(m){ o.max = parseInt(m[1].replace(/[.,]/g,''),10) * (m[2]?1000:1); if(o.max < 1000) o.max *= 1000; why.push('under '+money(o.max)); }
-      if(/electric|ev\b/i.test(q)){ o.fuel = 'Electric'; why.push('electric'); } else if(/hybrid/i.test(q)){ o.fuel = 'Hybrid'; why.push('hybrid'); } else if(/diesel/i.test(q)){ o.fuel = 'Diesel'; why.push('diesel'); }
-      if(/suv|family|kids|space/i.test(q)){ o.body = /estate|wagon|kombi|touring/i.test(q) ? 'Estate' : 'SUV'; why.push(o.body==='SUV'?'SUV for space':'estate'); }
-      else if(/estate|wagon|touring|boot/i.test(q)){ o.body = 'Estate'; why.push('estate with a big boot'); }
-      else if(/city|small|first car|cheap|student/i.test(q)){ o.body = 'Hatchback'; why.push('compact hatchback'); }
-      if(/low (km|mileage)|few km|almost new/i.test(q)){ o.kmMax = 30000; why.push('low mileage'); }
-      C.forEach(function(c){ if(q.toLowerCase().indexOf(c.make.toLowerCase())>-1){ o.make = c.make; } }); if(o.make!=='All') why.push(o.make);
-      f = o; syncFilters(); renderGrid();
-      var n = list().length;
-      $('#c-ai-out', car).innerHTML = '<div class="ai-box"><div class="ai-h">AI car finder</div>'+(n ? 'Found <b>'+n+' car'+(n>1?'s':'')+'</b>'+(why.length?' that match: '+why.join(', '):'')+'. Sorted by best value.' : 'No exact match'+(why.length?' for '+why.join(', '):'')+'. Try a higher budget.')+'</div>';
-    }
-    function syncFilters(){ $('#c-make', car).value = f.make; $('#c-fuel', car).value = f.fuel; $('#c-max', car).value = f.max; $('#c-maxv', car).textContent = money(f.max); $('#c-km', car).value = f.kmMax; $('#c-kmv', car).textContent = kmf(f.kmMax); $('#c-sort', car).value = f.sort; }
-
-    car.addEventListener('click', function(e){
-      var t = e.target.closest('button, [data-close]'); if(!t || !car.contains(t)) return;
-      if(t.dataset.body){ f.body = t.dataset.body; renderGrid(); return; }
-      if(t.dataset.open){ detail(+t.dataset.open); return; }
-      if(t.dataset.save){ var id = +t.dataset.save, i = saved.indexOf(id); if(i>-1) saved.splice(i,1); else { saved.push(id); toastC('Saved. We tell you if the price drops.'); } topCounts(); renderGrid(); return; }
-      if(t.dataset.td){ testDrive(+t.dataset.td); return; }
-      if(t.dataset.res){ var c = byId(+t.dataset.res); reserved.push(c.id); renderGrid(); open('<div class="done-ico"><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22" fill="var(--teal-soft)"/><path d="m15 24.5 6 6 12-13" fill="none" stroke="var(--teal)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><h3>Reserved for 48 hours</h3><p>The '+esc(c.make+' '+c.model)+' is held for you until '+new Date(Date.now()+1728e5).toLocaleDateString('en-GB',{weekday:'long', day:'numeric', month:'long'})+'. A salesperson will call you to arrange the next steps.</p><button type="button" class="btn btn-ink" data-td="'+c.id+'" style="margin-top:16px;width:100%">Also book a test drive</button>', 'Reserved'); return; }
-      if(t.id==='c-cmpbtn'){ compare(); return; }
-      if(t.id==='c-savedbtn'){ if(!saved.length){ toastC('Tap the heart on a car to save it.'); return; } open('<h3>Saved cars</h3><div class="saved">'+saved.map(function(id){ var c = byId(id); return '<button type="button" class="adv" data-open="'+id+'"><span>'+draw(c)+'</span><b>'+esc(c.make+' '+c.model)+'</b><small>'+money(c.price)+'</small></button>'; }).join('')+'</div>', 'Saved cars'); return; }
-      if(t.id==='c-trade'){ tradeIn(); return; }
-      if(t.hasAttribute('data-close')){ close(); return; }
-      if(t.dataset.ask!=null){ $('#c-ai-q', car).value = t.textContent; aiSearch(t.textContent); return; }
-      if(t.id==='c-reset'){ f = {make:'All', body:'All', fuel:'All', max:45000, kmMax:100000, sort:'best'}; syncFilters(); renderGrid(); $('#c-ai-out', car).innerHTML = ''; return; }
+    $('#fm-go', fac).addEventListener('click', function(){ submit($('#fm-text', fac).value); });
+    $('#fm-text', fac).addEventListener('keydown', function(e){ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); submit(e.target.value); } });
+    fac.querySelectorAll('[data-sample]').forEach(function(b){ b.addEventListener('click', function(){ $('#fm-text', fac).value = b.dataset.sample; $('#fm-text', fac).focus(); }); });
+    $('#fplan', fac).addEventListener('click', function(e){
+      var b = e.target.closest('.room'); if(!b) return; var k = b.dataset.k;
+      renderPlan(k);
+      var open = T.filter(function(t){return t.room===k && t.st!=='Resolved';});
+      $('#fm-room', fac).innerHTML = '<b>'+R[k].n+'</b> · '+R[k].t.toFixed(1)+' °C · '+(open.length? open.length+' open ticket'+(open.length>1?'s':'') : 'no open tickets');
     });
-    car.addEventListener('change', function(e){
-      var t = e.target;
-      if(t.dataset.cmp){ var id = +t.dataset.cmp, i = cmp.indexOf(id); if(t.checked){ if(cmp.length>=3){ t.checked = false; toastC('You can compare up to 3 cars.'); return; } cmp.push(id); } else cmp.splice(i,1); topCounts(); return; }
-      if(t.id==='c-make'){ f.make = t.value; renderGrid(); } if(t.id==='c-fuel'){ f.fuel = t.value; renderGrid(); } if(t.id==='c-sort'){ f.sort = t.value; renderGrid(); }
-      if(t.id==='fin-t'){ upd(); }
-    });
-    var upd = function(){ var c = byId(+panel.dataset.car), d = +$('#fin-d', car).value, m = +$('#fin-t', car).value; $('#fin-dv', car).textContent = money(d); $('#fin-r', car).textContent = money(rate(c.price, d, m)); };
-    car.addEventListener('input', function(e){
-      var t = e.target;
-      if(t.id==='c-max'){ f.max = +t.value; $('#c-maxv', car).textContent = money(f.max); renderGrid(); }
-      if(t.id==='c-km'){ f.kmMax = +t.value; $('#c-kmv', car).textContent = kmf(f.kmMax); renderGrid(); }
-      if(t.id==='fin-d'){ upd(); }
-    });
-    car.addEventListener('submit', function(e){
-      e.preventDefault(); var t = e.target;
-      if(t.id==='c-ai'){ var q = $('#c-ai-q', car).value.trim(); if(q) aiSearch(q); else $('#c-ai-q', car).focus(); }
-      if(t.id==='td-f'){
-        var n = $('#td-n', car).value.trim(), em = $('#td-e', car).value.trim(), er = $('#td-err', car);
-        if(!n){ er.className='note err'; er.textContent='Add your name.'; $('#td-n', car).focus(); return; }
-        if(!/^\S+@\S+\.\S+$/.test(em)){ er.className='note err'; er.textContent='Enter a valid email so we can send the confirmation.'; $('#td-e', car).focus(); return; }
-        var c = byId(+panel.dataset.car), day = $('#td-d', car).value, time = (car.querySelector('[name=td-t]:checked')||{}).value, ti = $('#td-ti', car).checked;
-        open('<div class="done-ico"><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22" fill="var(--teal-soft)"/><path d="m15 24.5 6 6 12-13" fill="none" stroke="var(--teal)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><h3>See you on '+esc(day)+'</h3><p>Test drive in the <b>'+esc(c.make+' '+c.model)+'</b> at '+time+'. A confirmation is on its way to '+esc(em)+'.</p><div class="ai-box"><div class="ai-h">Prepared for you</div><ul><li>The car is charged or fuelled and ready at the entrance</li><li>Bring your driving licence</li>'+(ti?'<li>Bring your car: we value it during the test drive</li>':'')+'</ul></div><button type="button" class="btn btn-ink" data-close style="width:100%;margin-top:14px">Back to the cars</button>', 'Test drive booked');
-      }
-      if(t.id==='ti-f'){
-        var mk = $('#ti-m', car).value.trim(), mo = $('#ti-mo', car).value.trim(), y = +$('#ti-y', car).value, k = +$('#ti-k', car).value, cond = +$('#ti-c', car).value, er2 = $('#ti-err', car);
-        if(!mk || !mo){ er2.className='note err'; er2.textContent='Add the make and model.'; (mk?$('#ti-mo', car):$('#ti-m', car)).focus(); return; }
-        if(!k){ er2.className='note err'; er2.textContent='Add the mileage in kilometres.'; $('#ti-k', car).focus(); return; }
-        er2.textContent = '';
-        var premium = /bmw|audi|mercedes|tesla|volvo|porsche/i.test(mk) ? 1.35 : 1, base = 26000*premium*Math.pow(0.86, 2026-y)*Math.max(0.45, 1-k/300000)*cond;
-        typeInto($('#ti-out', car), '<div class="ai-box"><div class="ai-h">AI estimate</div>Your '+esc(mk+' '+mo)+' ('+y+', '+kmf(k)+') is worth about <b>'+money(base*.94)+' – '+money(base*1.06)+'</b>. Based on recent sales of similar cars in your region.</div>');
-      }
-    });
-    car.addEventListener('keydown', function(e){ if(e.key==='Escape' && !panel.hidden) close(); });
-    scrim.addEventListener('click', close);
-    topCounts(); renderGrid();
+    /* simulated sensor drift */
+    setInterval(function(){
+      Object.keys(R).forEach(function(k){ R[k].t += (Math.random()-.5)*0.2; if(k==='server') R[k].t = Math.max(26.5, Math.min(29, R[k].t)); });
+      var sel = (fac.querySelector('.room.sel')||{}).dataset; renderPlan(sel ? sel.k : null);
+      fac.querySelectorAll('.room.flash').forEach(function(x){ x.classList.remove('flash'); });
+    }, 4000);
+    $('#fm-list', fac).addEventListener('click', function(e){ var b = e.target.closest('[data-tk]'); if(!b) return; T.forEach(function(t){ if(t.id===b.dataset.tk) t.st = b.dataset.to; }); renderTickets(); var sel = (fac.querySelector('.room.sel')||{}).dataset; renderPlan(sel ? sel.k : null); });
+    renderPlan(); renderTickets();
   }
   })();
+})();
 
+/* Hr Tool demo. All data is fictional example data. */
+(function(){
+  var $ = SDA.$, esc = SDA.esc, usd = SDA.usd, typeInto = SDA.typeInto;
+  (function(){
+  /* =================== HR TOOL =================== */
+  var hr = $('#demo-hr');
+  if(hr){
+    /* tabs */
+    var tabs = hr.querySelectorAll('[role=tab]');
+    tabs.forEach(function(t){ t.addEventListener('click', function(){
+      tabs.forEach(function(x){ x.setAttribute('aria-selected', x===t); $('#'+x.getAttribute('aria-controls')).hidden = x!==t; });
+    }); });
+
+    /* recruiting */
+    var STAGES = ['Applied','Screening','Interview','Offer'];
+    var C = [
+      {n:'Laura White', r:'fe', st:0, yrs:5, skills:{React:5,TypeScript:5,Testing:3,Accessibility:3}, note:'Led a design-system migration; strong accessibility focus.'},
+      {n:'Daniel Clark', r:'fe', st:0, yrs:2, skills:{React:3,TypeScript:2,Testing:2,Accessibility:1}, note:'Junior profile, quick learner, limited TypeScript experience.'},
+      {n:'Julia Young', r:'fe', st:1, yrs:7, skills:{React:5,TypeScript:4,Testing:5,Accessibility:3}, note:'Senior engineer from e-commerce; owned CI test strategy.'},
+      {n:'Michael Brown', r:'fe', st:2, yrs:4, skills:{React:4,TypeScript:4,Testing:3,Accessibility:3}, note:'Solid all-rounder; available in 4 weeks.'},
+      {n:'Lisa Miller', r:'fe', st:3, yrs:6, skills:{React:5,TypeScript:5,Testing:3,Accessibility:5}, note:'Excellent technical interview; salary expectation within band.'},
+      {n:'John Smith', r:'sm', st:0, yrs:8, skills:{'B2B sales':5,Negotiation:4,CRM:4,Languages:5}, note:'Exceeded quota three years running in industrial SaaS.'},
+      {n:'Sarah Johnsonč', r:'sm', st:1, yrs:3, skills:{'B2B sales':3,Negotiation:3,CRM:5,Languages:3}, note:'Strong CRM hygiene; less enterprise experience.'},
+      {n:'Mark Lewis', r:'sm', st:2, yrs:10, skills:{'B2B sales':5,Negotiation:5,CRM:2,Languages:5}, note:'Enterprise closer; wants a team-lead path.'}
+    ];
+    var ROLE = {fe:{t:'Frontend Engineer', need:{React:5,TypeScript:5,Testing:4,Accessibility:4}, yrs:5}, sm:{t:'Sales Manager EMEA', need:{'B2B sales':5,Negotiation:5,CRM:4,Languages:5}, yrs:6}};
+    C.forEach(function(c){
+      var need = ROLE[c.r].need, tot=0, got=0;
+      Object.keys(need).forEach(function(k){ tot += need[k]; got += Math.min(c.skills[k]||0, need[k]); });
+      c.score = Math.round((got/tot)*80 + Math.min(c.yrs/ROLE[c.r].yrs,1)*20);
+    });
+    var role = 'fe', selC = null;
+    var initials = function(n){ return n.split(' ').map(function(x){return x[0];}).join(''); };
+    var sc = function(s){ return s>=85?'s-hi':s>=70?'s-mid':'s-lo'; };
+    function renderBoard(){
+      $('#kanban', hr).innerHTML = STAGES.map(function(stg, i){
+        var cs = C.filter(function(c){ return c.r===role && c.st===i; }).sort(function(a,b){return b.score-a.score;});
+        return '<div class="col"><h4>'+stg+'<span>'+cs.length+'</span></h4>'+(cs.map(function(c){
+          return '<button type="button" class="cand'+(selC===c.n?' sel':'')+'" data-n="'+esc(c.n)+'"><span class="av">'+initials(c.n)+'</span><span><b>'+esc(c.n)+'</b><small>'+c.yrs+' yrs experience</small></span><span class="score '+sc(c.score)+'">'+c.score+'</span></button>';
+        }).join('') || '<div class="empty" style="padding:12px">No candidates</div>')+'</div>';
+      }).join('');
+    }
+    function showCand(n){
+      selC = n; renderBoard();
+      var c = C.filter(function(x){return x.n===n;})[0], need = ROLE[c.r].need;
+      var rows = Object.keys(need).map(function(k){
+        var v = c.skills[k]||0, ok = v>=need[k];
+        return '<div class="meter" style="font-size:13px;margin-top:8px"><span style="width:110px">'+k+'</span><i><b style="width:'+(v*20)+'%;background:'+(ok?'var(--ok)':'var(--warn)')+'"></b></i><span style="width:44px;text-align:right">'+v+'/'+need[k]+'</span></div>';
+      }).join('');
+      var gaps = Object.keys(need).filter(function(k){ return (c.skills[k]||0) < need[k]; });
+      var q = gaps.length ? gaps.map(function(g){ return 'Walk me through a recent project where you used '+g+'. What would you do differently?'; }) : ['Which part of this role would you change in your first 90 days, and why?'];
+      $('#cand-detail', hr).innerHTML =
+        '<div style="display:flex;gap:12px;align-items:center"><span class="av" style="width:44px;height:44px">'+initials(c.n)+'</span><div><h3>'+esc(c.n)+'</h3><div style="font-size:13.5px;color:var(--dim)">'+ROLE[c.r].t+' · '+STAGES[c.st]+'</div></div><span class="score '+sc(c.score)+'" style="margin-left:auto;font-size:16px">'+c.score+'%</span></div>'+
+        '<h4>Skill match vs. job profile</h4>'+rows+
+        '<div class="ai-box"><div class="ai-h">AI summary</div><div id="cand-ai"></div></div>'+
+        '<div class="btn-row">'+(c.st<3?'<button type="button" class="btn btn-ink btn-sm" id="adv">Move to '+STAGES[c.st+1]+'</button>':'<span class="pill p-ok">Offer stage</span>')+'</div>';
+      typeInto($('#cand-ai', hr), '<p>'+esc(c.note)+' '+(gaps.length?'Gaps: <b>'+gaps.join(', ')+'</b>.':'Meets every core requirement.')+'</p><p style="margin-top:6px"><b>Suggested interview questions</b></p><ul><li>'+q.slice(0,2).map(esc).join('</li><li>')+'</li></ul>');
+      var a = $('#adv', hr); if(a) a.onclick = function(){ c.st++; showCand(c.n); };
+    }
+    $('#role', hr).addEventListener('change', function(e){ role = e.target.value; var first = C.filter(function(c){return c.r===role;}).sort(function(a,b){return b.score-a.score;})[0]; showCand(first.n); });
+    $('#kanban', hr).addEventListener('click', function(e){ var b = e.target.closest('.cand'); if(b) showCand(b.dataset.n); });
+    renderBoard(); showCand('Lisa Miller');
+
+    /* leave */
+    var DAYS = ['Mo 7','Tu 8','We 9','Th 10','Fr 11','Mo 14','Tu 15','We 16','Th 17','Fr 18'];
+    var TEAM = [
+      {n:'Anna Moore', on:[0,1,2], st:'approved'},
+      {n:'David Wilson', on:[3,4,5,6], st:'pending', reason:'Family visit', bal:14},
+      {n:'Emma Davis', on:[5,6,7], st:'pending', reason:'Vacation', bal:9},
+      {n:'James Taylor', on:[8,9], st:'pending', reason:'Training course', bal:21},
+      {n:'Chris Walker', on:[], st:'none'}
+    ];
+    var MINSTAFF = 3;
+    function renderLeave(){
+      var cal = '<span></span>'+DAYS.map(function(d){return '<span style="text-align:center">'+d+'</span>';}).join('');
+      TEAM.forEach(function(p){
+        cal += '<span class="nm">'+p.n+'</span>'+DAYS.map(function(d,i){
+          var on = p.on.indexOf(i)>-1 && p.st!=='declined';
+          return '<span class="c '+(on?(p.st==='approved'?'on':'pend'):'')+'"></span>';
+        }).join('');
+      });
+      $('#cal', hr).innerHTML = cal;
+      $('#leave-list', hr).innerHTML = TEAM.filter(function(p){return p.reason;}).map(function(p, idx){
+        var clash = p.on.filter(function(d){
+          var away = TEAM.filter(function(o){ return o!==p && o.on.indexOf(d)>-1 && (o.st==='approved'); }).length + 1;
+          return TEAM.length - away < MINSTAFF;
+        });
+        var hint = p.st!=='pending' ? '' : clash.length ?
+          '<span class="pill p-warn">Coverage below '+MINSTAFF+' on '+clash.map(function(d){return DAYS[d];}).join(', ')+'</span>' :
+          '<span class="pill p-ok">AI check: coverage OK, balance '+p.bal+' days</span>';
+        return '<div class="leave"><div><b>'+p.n+'</b> · '+p.reason+'<div class="meta">'+DAYS[p.on[0]]+' – '+DAYS[p.on[p.on.length-1]]+' · '+p.on.length+' days</div><div style="margin-top:6px">'+hint+'</div></div><div class="btn-row" style="margin:0">'+
+          (p.st==='pending' ? '<button type="button" class="btn btn-ink btn-sm" data-a="approved" data-n="'+esc(p.n)+'">Approve</button><button type="button" class="btn btn-ghost btn-sm" data-a="declined" data-n="'+esc(p.n)+'">Decline</button>' :
+          '<span class="pill '+(p.st==='approved'?'p-ok':'p-bad')+'">'+(p.st==='approved'?'Approved':'Declined')+'</span>')+'</div></div>';
+      }).join('');
+    }
+    $('#leave-list', hr).addEventListener('click', function(e){
+      var b = e.target.closest('[data-a]'); if(!b) return;
+      TEAM.forEach(function(p){ if(p.n===b.dataset.n) p.st = b.dataset.a; }); renderLeave();
+    });
+    renderLeave();
+
+    /* assistant */
+    var KB = [
+      {re:/(vacation|holiday|leave|days off|annual)/i, a:'Full-time employees receive <b>30 days</b> of paid annual leave per calendar year. Up to 5 unused days carry over until 31 March of the following year.', src:'Example Handbook §4.1 Annual leave'},
+      {re:/(sick|ill|doctor|medical)/i, a:'Report sickness to your manager before your shift starts. From the <b>third day</b> of absence, a medical certificate is required.', src:'Example Handbook §4.3 Sick leave'},
+      {re:/(remote|home office|work from home|wfh|hybrid)/i, a:'You can work remotely up to <b>3 days per week</b> after agreeing with your team lead. Working from abroad needs HR approval for each stay.', src:'Example Handbook §5.2 Hybrid work'},
+      {re:/(expense|travel|reimburse|mileage|receipt)/i, a:'Submit expenses within <b>30 days</b> with receipts attached. Private car use is reimbursed at $0.30 per km.', src:'Example Handbook §7.1 Travel & expenses'},
+      {re:/(parental|maternity|paternity|baby|child)/i, a:'Parental leave follows the statutory rules. Notify HR at least <b>7 weeks</b> before the planned start so we can arrange cover.', src:'Example Handbook §4.6 Parental leave'},
+      {re:/(onboard|first day|laptop|new hire|equipment)/i, a:'New hires receive their laptop and accounts on <b>day one</b>. Your onboarding buddy and a 30-60-90 day plan are assigned in the HR portal.', src:'Example Handbook §2.1 Onboarding'}
+    ];
+    var chat = $('#chat', hr);
+    function say(cls, html){ var d = document.createElement('div'); d.className='msg '+cls; d.innerHTML = html; chat.appendChild(d); chat.scrollTop = chat.scrollHeight; return d; }
+    function ask(q){
+      q = q.trim(); if(!q) return;
+      say('me', esc(q));
+      var hit = KB.filter(function(k){ return k.re.test(q); })[0];
+      var d = say('bot', '');
+      var html = hit ? hit.a + '<span class="src">Source: '+hit.src+'</span>' :
+        'I could not find that in the employee handbook. I have forwarded your question to the HR team, who usually reply within one business day.<span class="src">Routed to: hr-team queue</span>';
+      setTimeout(function(){ typeInto(d, html, function(){ chat.scrollTop = chat.scrollHeight; }); }, 350);
+      $('#ask', hr).value = '';
+    }
+    $('#ask-go', hr).addEventListener('click', function(){ ask($('#ask', hr).value); });
+    $('#ask', hr).addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); ask(e.target.value); } });
+    hr.querySelectorAll('[data-q]').forEach(function(b){ b.addEventListener('click', function(){ ask(b.dataset.q); }); });
+    say('bot', 'Hi, I am the HR assistant. Ask me about leave, sickness, remote work, expenses or onboarding.<span class="src">Answers come from the example employee handbook</span>');
+  }
+  })();
 })();
