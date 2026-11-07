@@ -300,8 +300,6 @@ BURGER = '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 6.5h14M3 13.5h
 def nav(r, active):
     drop = "".join(f'<li><a href="{r}services/{s["slug"]}.html"><span class="d-ic" aria-hidden="true">{ICONS[s["icon"]]}</span><span class="d-tx"><b>{e(s["name"])}</b><span>{e(", ".join(s["chips"]))}</span></span></a></li>' for s in SERVICES)
     drop += f'<li class="d-feature"><a href="{r}services/index.html"><span class="d-kick">All services</span><b>From first prototype to production</b><span>See how we design, build and run AI software for your team.</span><span class="d-go">Explore services <span class="arr">→</span></span></a></li>'
-    ucs = "".join(f'<li><a href="{r}use-cases/{u["slug"]}.html"><span class="d-ic" aria-hidden="true">{UC_ICONS[u["slug"]]}</span><span class="d-tx"><b>{e(u["name"])}</b><span>{e(u["label"])} demo</span></span></a></li>' for u in USE_CASES)
-    ucs += f'<li class="d-feature d-feature-alt"><a href="{r}use-cases/index.html"><span class="d-kick"><i class="pulse-dot"></i>Live in your browser</span><b>Six working demos</b><span>Click through real software on example data, no sign-up needed.</span><span class="d-go">Try the demos <span class="arr">→</span></span></a></li>' 
     cur = lambda k: ' aria-current="page"' if active == k else ""
     return f"""<div class="aurora" aria-hidden="true"><i class="a1"></i><i class="a2"></i><i class="a3"></i></div><div class="grain" aria-hidden="true"></div>
 <a class="skip" href="#main">Skip to content</a>
@@ -311,7 +309,7 @@ def nav(r, active):
     <ul class="menu">
       <li class="m-ind" aria-hidden="true"></li>
       <li class="has-drop"><a href="{r}services/index.html"{cur("services")}>Services <svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a><ul class="drop mega glass-strong">{drop}</ul></li>
-      <li class="has-drop"><a href="{r}use-cases/index.html"{cur("use-cases")}>Use cases <span class="live-badge"><i class="pulse-dot"></i>6 live</span> <svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a><ul class="drop mega glass-strong">{ucs}</ul></li>
+      <li><a href="{r}use-cases/index.html"{cur("use-cases")}><i class="pulse-dot" aria-hidden="true"></i>Live demos</a></li>
       <li><a href="{r}index.html#process">Process</a></li>
       <li><a href="{r}contact.html"{cur("contact")}>Contact</a></li>
       <li class="m-cta"><a class="btn btn-primary" href="{r}contact.html">Start a project <span class="arr">→</span></a></li>
