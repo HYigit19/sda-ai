@@ -5,16 +5,16 @@
 <title>SDA AI Services – our services in 35 seconds</title>
 <style>
 @font-face{font-family:Geist;src:url("../geist.woff2") format("woff2");font-weight:100 900}
-:root{--bg:#F7F9F9;--ink:#0E1B22;--ink2:#243640;--dim:#56656E;--teal:#0D7270;--teal2:#17A39D;--glow:#63D9CC;--tsoft:#E3F5F2;--coral:#FF7D5E;--cink:#BF4528;--csoft:#FFEDE6;--line:rgba(14,27,34,.09)}
+:root{--bg:#F8F7F5;--ink:#0B1F2A;--ink2:#22343F;--dim:#5E6068;--teal:#C2410C;--teal2:#EA580C;--glow:#FDA978;--tsoft:#FFEFE5;--coral:#0EA5E9;--cink:#0369A1;--csoft:#E0F2FE;--line:rgba(11,31,42,.09)}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{width:1920px;height:1080px;overflow:hidden;background:var(--bg);font-family:Geist,system-ui,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased}
 *,*::before,*::after{animation-play-state:paused!important}
 
 /* light clouds behind every scene */
 .cloud{position:absolute;border-radius:50%;filter:blur(40px)}
-.c1{width:1100px;height:1100px;left:-380px;top:-560px;background:radial-gradient(circle,rgba(99,217,204,.45),transparent 65%);animation:drift 35s linear both}
-.c2{width:900px;height:900px;right:-300px;top:-260px;background:radial-gradient(circle,rgba(255,168,143,.45),transparent 65%);animation:drift2 35s linear both}
-.c3{width:800px;height:800px;left:700px;bottom:-560px;background:radial-gradient(circle,rgba(189,239,232,.6),transparent 65%);animation:drift 35s linear reverse both}
+.c1{width:1100px;height:1100px;left:-380px;top:-560px;background:radial-gradient(circle,rgba(253,169,120,.45),transparent 65%);animation:drift 35s linear both}
+.c2{width:900px;height:900px;right:-300px;top:-260px;background:radial-gradient(circle,rgba(125,211,252,.45),transparent 65%);animation:drift2 35s linear both}
+.c3{width:800px;height:800px;left:700px;bottom:-560px;background:radial-gradient(circle,rgba(255,227,210,.6),transparent 65%);animation:drift 35s linear reverse both}
 @keyframes drift{to{transform:translate(160px,90px)}}
 @keyframes drift2{to{transform:translate(-140px,120px)}}
 
@@ -39,7 +39,7 @@ h2{font-size:104px}
 .sub{margin-top:34px;font-size:30px;line-height:1.45;color:var(--dim);max-width:640px}
 
 /* ui cards */
-.card{background:rgba(255,255,255,.92);border:1px solid #fff;border-radius:34px;box-shadow:0 2px 6px rgba(14,27,34,.05),0 50px 100px -40px rgba(14,27,34,.32);padding:34px}
+.card{background:rgba(255,255,255,.92);border:1px solid #fff;border-radius:34px;box-shadow:0 2px 6px rgba(11,31,42,.05),0 50px 100px -40px rgba(11,31,42,.32);padding:34px}
 .card-h{display:flex;justify-content:space-between;align-items:center;font-size:24px;font-weight:600;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:10px}
 .card-h span{font-size:18px;font-weight:500;color:var(--teal);letter-spacing:.06em}
 .row{display:flex;align-items:center;gap:20px;padding:20px 0;border-bottom:1px solid var(--line);font-size:25px}
@@ -57,16 +57,16 @@ h2{font-size:104px}
 .chat{display:grid;gap:18px}
 .b{max-width:80%;padding:22px 26px;border-radius:26px;font-size:26px;line-height:1.4}
 .b-in{background:var(--ink);color:#fff;border-bottom-right-radius:8px;margin-left:auto}
-.b-out{background:#fff;border:1px solid var(--line);border-bottom-left-radius:8px;box-shadow:0 30px 60px -36px rgba(14,27,34,.35)}
+.b-out{background:#fff;border:1px solid var(--line);border-bottom-left-radius:8px;box-shadow:0 30px 60px -36px rgba(11,31,42,.35)}
 .b-out small{display:block;margin-top:10px;font-size:18px;color:var(--teal);font-weight:500}
 
 /* browser */
-.browser{border-radius:30px;overflow:hidden;background:#fff;box-shadow:0 2px 6px rgba(14,27,34,.05),0 50px 100px -40px rgba(14,27,34,.32)}
-.browser .bar{display:flex;align-items:center;gap:10px;padding:18px 22px;background:#F1F5F5;border-bottom:1px solid var(--line)}
+.browser{border-radius:30px;overflow:hidden;background:#fff;box-shadow:0 2px 6px rgba(11,31,42,.05),0 50px 100px -40px rgba(11,31,42,.32)}
+.browser .bar{display:flex;align-items:center;gap:10px;padding:18px 22px;background:#F5F2EF;border-bottom:1px solid var(--line)}
 .browser .bar i{width:13px;height:13px;border-radius:50%;background:#D5DEDF}
 .browser .bar span{margin-left:16px;flex:1;height:34px;border-radius:10px;background:#fff;display:flex;align-items:center;padding:0 16px;font-size:17px;color:var(--dim)}
 .portal{display:grid;grid-template-columns:220px 1fr;min-height:470px}
-.portal nav{background:#F7FAFA;border-right:1px solid var(--line);padding:26px 20px;display:grid;gap:12px;align-content:start;font-size:20px;color:var(--dim)}
+.portal nav{background:#FAF8F6;border-right:1px solid var(--line);padding:26px 20px;display:grid;gap:12px;align-content:start;font-size:20px;color:var(--dim)}
 .portal nav b{display:block;padding:12px 14px;border-radius:12px}
 .portal nav b.on{background:var(--ink);color:#fff}
 .portal main{padding:30px;display:grid;gap:16px;align-content:start}
@@ -77,11 +77,11 @@ h2{font-size:104px}
 
 /* phone + invoice */
 .duo{position:relative;height:680px}
-.phone{position:absolute;left:40px;top:0;width:330px;height:670px;border-radius:52px;background:#0E1B22;padding:14px;box-shadow:0 60px 110px -40px rgba(14,27,34,.55)}
+.phone{position:absolute;left:40px;top:0;width:330px;height:670px;border-radius:52px;background:#0B1F2A;padding:14px;box-shadow:0 60px 110px -40px rgba(11,31,42,.55)}
 .phone .scr{height:100%;border-radius:40px;background:#fff;overflow:hidden;padding:44px 22px 22px;display:grid;gap:14px;align-content:start}
 .phone .scr h5{font-size:24px;font-weight:600;display:flex;justify-content:space-between}
 .phone .scr h5 span{font-size:16px;color:var(--dim);font-weight:500}
-.map{height:150px;border-radius:18px;background:#E8F2F0;position:relative;overflow:hidden}
+.map{height:150px;border-radius:18px;background:#FFF4EC;position:relative;overflow:hidden}
 .map svg{position:absolute;inset:0}
 .map path{stroke-dasharray:420;stroke-dashoffset:420;animation:draw 1.6s ease both;animation-delay:calc(var(--s) + 1s)}
 @keyframes draw{to{stroke-dashoffset:0}}
@@ -98,19 +98,19 @@ h2{font-size:104px}
 .hub svg.lines{position:absolute;inset:0;width:100%;height:100%}
 .hub svg.lines path{stroke-dasharray:8 10;animation:flow 2s linear infinite;animation-delay:var(--s)}
 @keyframes flow{to{stroke-dashoffset:-72}}
-.node{position:absolute;padding:20px 28px;border-radius:22px;background:#fff;border:1px solid var(--line);box-shadow:0 30px 60px -34px rgba(14,27,34,.35);font-size:26px;font-weight:600;display:flex;align-items:center;gap:14px}
+.node{position:absolute;padding:20px 28px;border-radius:22px;background:#fff;border:1px solid var(--line);box-shadow:0 30px 60px -34px rgba(11,31,42,.35);font-size:26px;font-weight:600;display:flex;align-items:center;gap:14px}
 .node i{width:14px;height:14px;border-radius:50%;background:var(--teal2)}
-.core{position:absolute;left:50%;top:50%;width:200px;height:200px;margin:-100px 0 0 -100px;border-radius:50%;background:radial-gradient(circle at 30% 30%,#2BC3B6,var(--teal) 70%);display:grid;place-items:center;color:#fff;font-size:28px;font-weight:700;text-align:center;line-height:1.15;box-shadow:0 0 0 18px rgba(99,217,204,.18),0 0 0 40px rgba(99,217,204,.08),0 40px 80px -30px rgba(13,114,112,.7)}
+.core{position:absolute;left:50%;top:50%;width:200px;height:200px;margin:-100px 0 0 -100px;border-radius:50%;background:radial-gradient(circle at 30% 30%,#2BC3B6,var(--teal) 70%);display:grid;place-items:center;color:#fff;font-size:28px;font-weight:700;text-align:center;line-height:1.15;box-shadow:0 0 0 18px rgba(253,169,120,.18),0 0 0 40px rgba(253,169,120,.08),0 40px 80px -30px rgba(194,65,12,.7)}
 .dash{position:absolute;right:0;bottom:0;width:380px}
 .bars{display:flex;align-items:flex-end;gap:12px;height:150px;margin-top:10px}
 .bars i{flex:1;border-radius:8px 8px 3px 3px;background:var(--tsoft);transform-origin:bottom;transform:scaleY(0);animation:barup .7s cubic-bezier(.2,.8,.3,1) both}
-.bars i:last-child{background:linear-gradient(180deg,var(--coral),#FFB49F)}
+.bars i:last-child{background:linear-gradient(180deg,var(--coral),#7DD3FC)}
 @keyframes barup{to{transform:scaleY(1)}}
 
 /* end card */
 .end{background:var(--ink);grid-template-columns:1fr;justify-items:center;text-align:center;align-content:center;gap:0}
-.end .glow1{position:absolute;width:1000px;height:1000px;left:-200px;top:-400px;border-radius:50%;background:radial-gradient(circle,rgba(99,217,204,.28),transparent 62%)}
-.end .glow2{position:absolute;width:900px;height:900px;right:-200px;bottom:-460px;border-radius:50%;background:radial-gradient(circle,rgba(255,125,94,.26),transparent 62%)}
+.end .glow1{position:absolute;width:1000px;height:1000px;left:-200px;top:-400px;border-radius:50%;background:radial-gradient(circle,rgba(253,169,120,.28),transparent 62%)}
+.end .glow2{position:absolute;width:900px;height:900px;right:-200px;bottom:-460px;border-radius:50%;background:radial-gradient(circle,rgba(14,165,233,.26),transparent 62%)}
 .end img{width:420px;height:auto;position:relative}
 .end p.t{position:relative;margin-top:44px;font-size:44px;font-weight:600;letter-spacing:-.025em;color:#fff;max-width:1200px;line-height:1.2}
 .chips{position:relative;display:flex;flex-wrap:wrap;justify-content:center;gap:14px;margin-top:40px;max-width:1300px}
@@ -120,7 +120,7 @@ h2{font-size:104px}
 
 /* chrome: progress + logo */
 .prog{position:absolute;left:150px;bottom:70px;display:flex;gap:12px}
-.prog i{width:70px;height:5px;border-radius:5px;background:rgba(14,27,34,.1);overflow:hidden;position:relative}
+.prog i{width:70px;height:5px;border-radius:5px;background:rgba(11,31,42,.1);overflow:hidden;position:relative}
 .prog i::after{content:"";position:absolute;inset:0;background:var(--teal);transform-origin:left;transform:scaleX(0);animation:fill linear both;animation-duration:var(--d);animation-delay:var(--s)}
 @keyframes fill{to{transform:scaleX(1)}}
 .brand{position:absolute;right:150px;bottom:52px;height:56px}
@@ -215,7 +215,7 @@ h2{font-size:104px}
   <div class="duo">
     <div class="phone pop" style="--o:.35s"><div class="scr">
       <h5>Job #2208 <span>09:42</span></h5>
-      <div class="map"><svg viewBox="0 0 300 150"><path d="M20 120 C80 30, 150 140, 210 60 S 280 40, 285 28" fill="none" stroke="#0D7270" stroke-width="4" stroke-linecap="round"/><circle cx="20" cy="120" r="8" fill="#0E1B22"/><circle cx="285" cy="28" r="9" fill="#FF7D5E"/></svg></div>
+      <div class="map"><svg viewBox="0 0 300 150"><path d="M20 120 C80 30, 150 140, 210 60 S 280 40, 285 28" fill="none" stroke="#C2410C" stroke-width="4" stroke-linecap="round"/><circle cx="20" cy="120" r="8" fill="#0B1F2A"/><circle cx="285" cy="28" r="9" fill="#0EA5E9"/></svg></div>
       <div class="prow2"><span class="ck" style="--o:1.3s"><svg viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg></span>Location verified</div>
       <div class="prow2"><span class="ck" style="--o:1.7s"><svg viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg></span>Photos added</div>
       <div class="prow2"><span class="ck" style="--o:2.1s"><svg viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg></span>Customer signature</div>
@@ -238,7 +238,7 @@ h2{font-size:104px}
     <p class="sub rise" style="--o:.3s">SAP, CRM and documents connected, clean data and dashboards that update themselves.</p>
   </div>
   <div class="hub">
-    <svg class="lines" viewBox="0 0 860 640" fill="none"><path d="M140 90 L430 320" stroke="#17A39D" stroke-width="3"/><path d="M720 90 L430 320" stroke="#17A39D" stroke-width="3"/><path d="M110 520 L430 320" stroke="#17A39D" stroke-width="3"/><path d="M430 320 L640 470" stroke="#FF7D5E" stroke-width="3"/></svg>
+    <svg class="lines" viewBox="0 0 860 640" fill="none"><path d="M140 90 L430 320" stroke="#EA580C" stroke-width="3"/><path d="M720 90 L430 320" stroke="#EA580C" stroke-width="3"/><path d="M110 520 L430 320" stroke="#EA580C" stroke-width="3"/><path d="M430 320 L640 470" stroke="#0EA5E9" stroke-width="3"/></svg>
     <div class="node pop" style="--o:.5s;left:30px;top:50px"><i></i>SAP S/4HANA</div>
     <div class="node pop" style="--o:.7s;right:40px;top:50px"><i></i>CRM</div>
     <div class="node pop" style="--o:.9s;left:10px;top:480px"><i></i>Documents</div>
