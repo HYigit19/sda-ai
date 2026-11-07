@@ -12,6 +12,10 @@ SITE_URL = "https://sda-ai.pages.dev"      # Cloudflare Pages address. Change to
 EMAIL = "hello@sda-ai.services"            # TODO: your real email
 BRAND = "SDA AI Services"
 ROOT = Path(__file__).parent
+# Cache-busting: a short hash of the CSS and JS goes into every asset URL,
+# so browsers fetch new files right after each deploy.
+import hashlib as _hl
+ASSET_V = _hl.sha1(b"".join((ROOT / "src" / "assets" / n).read_bytes() for n in ("style.css", "main.js", "demos.js"))).hexdigest()[:8]
 OUT = ROOT / "site"
 
 e = html.escape
@@ -274,7 +278,7 @@ def head(r, path, title, meta, schema=None):
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="{r}assets/style.css">
+<link rel="stylesheet" href="{r}assets/style.css?v={ASSET_V}">
 {ld}"""
 
 BURGER = '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 6.5h14M3 13.5h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>'
@@ -306,7 +310,7 @@ def nav(r, active):
 def footer(r, demo=False):
     svc = "".join(f'<li><a href="{r}services/{s["slug"]}.html">{e(s["name"])}</a></li>' for s in SERVICES)
     ucs = "".join(f'<li><a href="{r}use-cases/{u["slug"]}.html">{e(u["name"])}</a></li>' for u in USE_CASES)
-    demo_js = f'\n<script src="{r}assets/demos.js"></script>' if demo else ""
+    demo_js = f'\n<script src="{r}assets/demos.js?v={ASSET_V}"></script>' if demo else ""
     return f"""<footer>
   <div class="wrap">
     <div class="foot glass">
@@ -318,7 +322,7 @@ def footer(r, demo=False):
     <div class="foot-base"><span>© <span id="yr">2026</span> {BRAND}</span><span><a href="{r}privacy.html">Privacy policy</a> · <a href="{r}legal-notice.html">Legal notice</a></span></div>
   </div>
 </footer>
-<script src="{r}assets/main.js"></script>{demo_js}"""
+<script src="{r}assets/main.js?v={ASSET_V}"></script>{demo_js}"""
 
 def cta_band(r, h="Ready to put AI to work?", p="Tell us about your process. We reply within one business day with first ideas and a proposed next step."):
     return f"""<section class="block" style="padding-top:0"><div class="wrap"><div class="cta-card glass-strong"><h2>{h}</h2><p>{p}</p>
