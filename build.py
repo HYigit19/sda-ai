@@ -492,6 +492,8 @@ def home():
   </div>
 </div></header>
 
+<section class="video-sec" aria-label="Video: our services in 35 seconds"><div class="wrap"><figure class="video-wide"><video src="assets/media/sda-ai-services.mp4" poster="assets/media/sda-ai-services.jpg" width="1920" height="1080" muted loop playsinline autoplay controls preload="metadata" aria-label="Video: our services in 35 seconds"></video><figcaption><i class="pulse-dot" aria-hidden="true"></i>Our services in 35 seconds</figcaption></figure></div></section>
+
 <section class="block" id="services"><div class="wrap">
   <div class="sec-head"><h2>Six ways we put AI to work</h2><p>Each engagement goes from first prototype to production code, with the integrations, security and monitoring an operations team needs.</p></div>
   {bento(r)}

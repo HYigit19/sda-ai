@@ -145,3 +145,9 @@
   menu.addEventListener('mouseleave', clear);
   menu.addEventListener('focusout', function(e){ if(!menu.contains(e.relatedTarget)) clear(); });
 })();
+
+/* Services video: no autoplay for visitors who prefer reduced motion. */
+(function(){
+  if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  document.querySelectorAll('.video-wide video').forEach(function(v){ v.removeAttribute('autoplay'); try{ v.pause(); }catch(e){} });
+})();
