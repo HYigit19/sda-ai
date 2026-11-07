@@ -215,30 +215,12 @@ USE_CASES = [
     card="Candidate matching, leave approvals with coverage checks and an HR assistant.",
     how=[("Review candidates", "Open a candidate to see the skill match and suggested interview questions."), ("Approve leave", "The coverage check warns you before the team is short-staffed."), ("Ask the assistant", "Employees get policy answers with the source section.")],
     services=["ai-agents", "workflow-automation", "web-applications"]),
-  dict(slug="furniture-shop", name="Furniture online shop", label="E-commerce",
-    title="AI Furniture Online Shop Demo with Room Advisor",
-    meta="Try an interactive AI furniture shop demo: an AI room advisor that builds a set within your budget, filters, product details, cart and a complete checkout.",
-    h1="An online shop with an AI room advisor.",
-    lede="Customers describe their room and budget, and the AI puts together a matching set. Browse, filter, add to cart and check out, all the way to the order confirmation.",
-    card="AI room advisor, product catalog, cart and complete checkout.",
-    how=[("Ask the advisor", "Describe your room and budget, or pick an example, and get a matching set."), ("Shop the catalog", "Filter by category, material and price, open a product and add it to the cart."), ("Check out", "Enter an address, pick delivery and assembly, and place a demo order.")],
-    services=["web-applications", "ai-agents", "data-management"]),
-  dict(slug="car-marketplace", name="Car dealer marketplace", label="Automotive",
-    title="Car Dealer Marketplace Demo with AI Car Finder",
-    meta="Try an interactive car dealer marketplace demo: AI car finder, filters, price ratings, comparison, financing calculator, trade-in valuation, test drive booking and reservations.",
-    h1="A car marketplace that sells for the dealer.",
-    lede="Buyers describe what they need and the AI finds matching cars. Every listing shows a fair-price rating and a monthly rate, and buyers can compare, value their trade-in, book a test drive or reserve online.",
-    card="AI car finder, price ratings, financing, trade-in, test drives and reservations.",
-    how=[("Find a car", "Describe what you need or use the filters. Every car shows a price rating."), ("Compare and finance", "Compare up to three cars and adjust the down payment and term."), ("Book or reserve", "Book a test drive, value your trade-in or reserve a car for 48 hours.")],
-    services=["web-applications", "ai-agents", "data-management"]),
 ]
 UC_ICONS = {
   "vendor-management": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-5 9 5-9 5-9-5z"/><path d="M3 9v6l9 5 9-5V9M12 14v6"/></svg>',
   "field-service": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>',
   "facility-management": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V5l8-3v19M12 9h8v12M7.5 8h1M7.5 12h1M7.5 16h1M15.5 13h1M15.5 17h1M2 21h20"/></svg>',
   "hr-tool": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c.6-3.4 3-5.4 6-5.4s5.4 2 6 5.4"/><circle cx="17.5" cy="9.5" r="2.4"/><path d="M16.5 14.6c2.3.3 4 1.9 4.5 4.6"/></svg>',
-  "furniture-shop": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11V8a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v3"/><path d="M3 13a2 2 0 0 1 4 0v2h10v-2a2 2 0 0 1 4 0v4H3v-4zM6 17v2M18 17v2"/></svg>',
-  "car-marketplace": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16v-3.5L6 7.5A2 2 0 0 1 7.9 6h8.2A2 2 0 0 1 18 7.5l2 5V16"/><path d="M3 16h18v2.5H3zM7.5 18.5V20M16.5 18.5V20M4 12.5h16"/></svg>',
 }
 SVC = {s["slug"]: s for s in SERVICES}
 UC = {u["slug"]: u for u in USE_CASES}
@@ -410,7 +392,6 @@ MINI = {
       + _mai("“Water leaking in the kitchen” → Plumbing · High · today") + "</div>",
   "hr-tool": '<div class="mini"><div class="mini-top">People Desk</div><div class="mini-kan"><div><i class="s"></i><i></i><i></i></div><div><i></i><i class="s"></i></div><div><i></i><i></i></div><div><i class="s"></i></div></div>'
       + _mai("Priya Nair: 96% match. Suggested question on testing strategy.") + "</div>",
-  "furniture-shop": '<div class="mini"><div class="mini-top">Loft &amp; Linden</div>' + _mai("Small living room, light wood, under €1,500 → sofa, coffee table and lamp for €1,349") + "</div>",
 }
 
 def uc_switch(r):
@@ -517,7 +498,7 @@ def home():
 </div></section>
 
 <section class="block" id="use-cases" style="padding-top:20px"><div class="wrap">
-  <div class="sec-head"><h2>Try it before you talk to us</h2><p>Six working demos of the kind of software we build. Click through them right here: they run in your browser on example data.</p></div>
+  <div class="sec-head"><h2>Try it before you talk to us</h2><p>Four working demos of the kind of software we build. Click through them right here: they run in your browser on example data.</p></div>
   {uc_switch(r)}
 </div></section>
 
@@ -612,11 +593,11 @@ def service_page(s):
 def uc_hub():
     r = "../"
     body = page_hero(r, [("Home", "index.html"), ("Use cases", None)], "See what AI software can do for your team",
-                     "Six interactive demos of the software we build. Each runs in your browser on example data, and each can be adapted to your processes and connected to your systems.") + f"""
+                     "Four interactive demos of the software we build. Each runs in your browser on example data, and each can be adapted to your processes and connected to your systems.") + f"""
 <section class="block" style="padding-top:20px"><div class="wrap">{uc_switch(r)}</div></section>
 {cta_band(r, "Need something similar?", "We adapt these demos to your data, processes and systems, usually starting with a two-week prototype.")}"""
     return page(r, "use-cases/", "AI Software Use Cases & Live Demos",
-                "Interactive AI software demos: vendor management, field service with proof of delivery, facility management, an HR tool, a furniture shop and a car dealer marketplace. See what SDA AI Services can build for you.",
+                "Interactive AI software demos: vendor management, field service with proof of delivery, facility management, and an HR tool. See what SDA AI Services can build for you.",
                 "use-cases", body, [crumb_ld([("Home", ""), ("Use cases", "use-cases/")])], demo=True)
 
 def demo_vendor():
@@ -634,33 +615,6 @@ def demo_vendor():
     <div class="app-main" id="v-main" aria-live="polite"></div>
   </div>
   <div class="d-toast" id="v-toast" role="status"></div>
-</div>"""
-
-def demo_shop():
-    cats = "".join(f'<button type="button" data-cat="{c}" aria-pressed="{"true" if c == "All" else "false"}">{c}</button>' for c in ["All", "Sofas", "Chairs", "Tables", "Lighting", "Storage", "Beds"])
-    mats = "".join(f"<option>{m}</option>" for m in ["All", "Oak", "Walnut", "Linen", "Velvet", "Metal", "Rattan"])
-    asks = "".join(f'<button type="button" data-ask>{q}</button>' for q in ["Small living room, light wood, under €1,500", "Cozy reading corner", "Home office for two, under €1,300", "Bedroom in warm walnut"])
-    return f"""<div class="demo-shell shop" id="demo-shop">
-  <div class="demo-top"><span class="dots"><i></i><i></i><i></i></span><span class="app">Loft &amp; Linden · furniture</span><span class="badge">Demo · example data</span></div>
-  <div class="shop-bar">
-    <b class="shop-brand">Loft &amp; Linden</b>
-    <input type="search" id="s-q" placeholder="Search sofas, lamps, oak…" aria-label="Search products">
-    <button type="button" class="cart-btn" id="s-cart" aria-label="Open cart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.6a2 2 0 0 0 2-1.5L21 8H6"/><circle cx="10" cy="20" r="1.3"/><circle cx="17" cy="20" r="1.3"/></svg>Cart<i id="s-cartn" hidden>0</i></button>
-  </div>
-  <div class="demo-body">
-    <form class="s-ai" id="s-ai"><label for="s-ai-q">AI room advisor</label><div class="s-ai-in"><input id="s-ai-q" placeholder="Describe your room, style and budget"><button class="btn btn-ink btn-sm" type="submit">Suggest a set</button></div>
-      <div class="qchips">{asks}</div></form>
-    <div id="s-ai-out"></div>
-    <div class="s-filters"><div class="s-cats" role="group" aria-label="Category">{cats}</div>
-      <div class="s-more"><label for="s-mat">Material<select id="s-mat">{mats}</select></label>
-      <label for="s-max">Max price <b id="s-maxv">€1,500</b><input type="range" id="s-max" min="100" max="1500" step="50" value="1500"></label>
-      <label for="s-sort">Sort<select id="s-sort"><option value="pop">Top rated</option><option value="low">Price: low to high</option><option value="high">Price: high to low</option></select></label></div></div>
-    <p class="note" id="s-count" style="margin:4px 0 12px"></p>
-    <div class="s-grid" id="s-grid"></div>
-  </div>
-  <div class="s-scrim" id="s-scrim" hidden></div>
-  <aside class="s-panel" id="s-panel" role="dialog" aria-modal="true" hidden tabindex="-1"></aside>
-  <div class="d-toast" id="s-toast" role="status"></div>
 </div>"""
 
 def demo_facility():
@@ -742,35 +696,7 @@ def demo_field():
   <div class="d-toast" id="f-toast" role="status"></div>
 </div>"""
 
-def demo_car():
-    makes = "".join(f"<option>{m}</option>" for m in ["All", "Audi", "BMW", "Ford", "Hyundai", "Mercedes-Benz", "Skoda", "Tesla", "Toyota", "Volkswagen", "Volvo"])
-    bodies = "".join(f'<button type="button" data-body="{b}" aria-pressed="{"true" if b == "All" else "false"}">{b}</button>' for b in ["All", "SUV", "Sedan", "Estate", "Hatchback"])
-    asks = "".join(f'<button type="button" data-ask>{q}</button>' for q in ["Family SUV, electric, under €40,000", "First car for a student, under €15,000", "Estate with a big boot, diesel", "Almost new hybrid, low mileage"])
-    return f"""<div class="demo-shell cardealer" id="demo-car">
-  <div class="demo-top"><span class="dots"><i></i><i></i><i></i></span><span class="app">Northline Motors · used cars</span><span class="badge">Demo · example data</span></div>
-  <div class="shop-bar"><b class="shop-brand">Northline Motors</b>
-    <button type="button" class="cart-btn" id="c-trade">Value my car</button>
-    <button type="button" class="cart-btn" id="c-savedbtn">Saved <i id="c-savedn">0</i></button>
-    <button type="button" class="cart-btn" id="c-cmpbtn" disabled>Compare <i id="c-cmpn">0</i></button></div>
-  <div class="demo-body">
-    <form class="s-ai" id="c-ai"><label for="c-ai-q">AI car finder</label><div class="s-ai-in"><input id="c-ai-q" placeholder="Describe the car you need and your budget"><button class="btn btn-ink btn-sm" type="submit">Find cars</button></div><div class="qchips">{asks}</div></form>
-    <div id="c-ai-out" style="margin-top:12px"></div>
-    <div class="s-filters"><div class="s-cats" role="group" aria-label="Body type">{bodies}</div>
-      <div class="s-more"><label for="c-make">Make<select id="c-make">{makes}</select></label>
-      <label for="c-fuel">Fuel<select id="c-fuel"><option>All</option><option>Electric</option><option>Hybrid</option><option>Petrol</option><option>Diesel</option></select></label>
-      <label for="c-max">Max price <b id="c-maxv">€45,000</b><input type="range" id="c-max" min="10000" max="45000" step="1000" value="45000"></label>
-      <label for="c-km">Max mileage <b id="c-kmv">100,000 km</b><input type="range" id="c-km" min="10000" max="100000" step="5000" value="100000"></label>
-      <label for="c-sort">Sort<select id="c-sort"><option value="best">Best value</option><option value="low">Lowest price</option><option value="km">Lowest mileage</option><option value="new">Newest</option></select></label>
-      <button type="button" class="btn btn-ghost btn-sm" id="c-reset">Reset</button></div></div>
-    <p class="note" id="c-count" style="margin:4px 0 12px"></p>
-    <div class="s-grid" id="c-grid"></div>
-  </div>
-  <div class="s-scrim" id="c-scrim" hidden></div>
-  <aside class="s-panel" id="c-panel" role="dialog" aria-modal="true" hidden tabindex="-1"></aside>
-  <div class="d-toast" id="c-toast" role="status"></div>
-</div>"""
-
-DEMOS = {"vendor-management": demo_vendor, "field-service": demo_field, "facility-management": demo_facility, "hr-tool": demo_hr, "furniture-shop": demo_shop, "car-marketplace": demo_car}
+DEMOS = {"vendor-management": demo_vendor, "field-service": demo_field, "facility-management": demo_facility, "hr-tool": demo_hr}
 
 def uc_page(u):
     r = "../"
