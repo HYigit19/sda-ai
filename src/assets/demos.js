@@ -2,7 +2,7 @@
 (function(){
   var $ = function(s, r){ return (r||document).querySelector(s); };
   var esc = function(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
-  var eur = function(n){ return '€' + (n>=1e6 ? (n/1e6).toFixed(2)+'M' : Math.round(n/1e3)+'k'); };
+  var usd = function(n){ return '$' + (n>=1e6 ? (n/1e6).toFixed(2)+'M' : Math.round(n/1e3)+'k'); };
   function typeInto(el, html, done){
     // reveal text word by word for an "AI is writing" feel
     var tmp = document.createElement('div'); tmp.innerHTML = html;
@@ -50,8 +50,8 @@
       {id:'CMP-207', s:'Medina Cartons', part:'Shipping cartons 60x40', issue:'Cartons crushed in transit, product scratched.', qty:340, cat:'Transport damage', sev:'Medium', status:'Closed', created:addDays(-21), rc:'Pallet stacking height exceeded. New packing specification agreed and rolled out.'}
     ];
     var APV = [
-      {id:'APV-77', type:'Supplier onboarding', title:'Onboard Volta Components as second source for electronics', by:'Jonas Weber', amount:0, steps:['Requested','Procurement','Quality','Approved'], step:1, status:'Pending'},
-      {id:'APV-76', type:'Contract renewal', title:'Renew framework agreement with Corvex Packaging for 2 years', by:'Mia Wagner', amount:820000, steps:['Requested','Procurement','Finance','Approved'], step:2, status:'Pending'}
+      {id:'APV-77', type:'Supplier onboarding', title:'Onboard Volta Components as second source for electronics', by:'Michael Brown', amount:0, steps:['Requested','Procurement','Quality','Approved'], step:1, status:'Pending'},
+      {id:'APV-76', type:'Contract renewal', title:'Renew framework agreement with Corvex Packaging for 2 years', by:'Emma Davis', amount:820000, steps:['Requested','Procurement','Finance','Approved'], step:2, status:'Pending'}
     ];
     var DOCS = [
       {n:'ISO 9001 certificate', s:'Nordwerk Metals', t:'Certificate', exp:'2027-03-31'},
@@ -98,7 +98,7 @@
         return '<tr data-n="'+esc(x.n)+'" tabindex="0" class="'+(x.n===selSup?'sel':'')+'"><td><b>'+esc(x.n)+'</b><span class="sub">'+esc(x.co)+'</span></td><td>'+esc(x.c)+'</td>'+
           '<td><div class="meter">'+x.otd+'%<i><b style="width:'+x.otd+'%;background:'+barCol(x.otd)+'"></b></i></div></td>'+
           '<td><div class="meter">'+x.q+'<i><b style="width:'+x.q+'%;background:'+barCol(x.q)+'"></b></i></div></td>'+
-          '<td>'+eur(x.spend)+'</td><td><span class="pill '+lvlCls[x.lvl]+'">'+lvlTxt[x.lvl]+' · '+x.risk+'</span></td></tr>';
+          '<td>'+usd(x.spend)+'</td><td><span class="pill '+lvlCls[x.lvl]+'">'+lvlTxt[x.lvl]+' · '+x.risk+'</span></td></tr>';
       }).join('') || '<tr><td colspan="6" class="empty">No suppliers match. Clear the search or pick All.</td></tr>';
       var pts = [];
       if(s.otd<90) pts.push('On-time delivery is <b>'+s.otd+'%</b>, below the 90% target.');
@@ -142,7 +142,7 @@
       var q = r.quotes.length ? '<div class="tbl-wrap" style="margin-top:12px"><table style="min-width:480px"><thead><tr><th>Supplier</th><th>Unit price</th><th>Total</th><th>Lead time</th><th>Terms</th><th></th></tr></thead><tbody>'+
         r.quotes.map(function(x){
           var canAward = r.status==='Quotes in';
-          return '<tr style="cursor:default"><td><b>'+esc(x.s)+'</b>'+(r.award===x.s?' <span class="pill p-ok">Awarded</span>':'')+'</td><td>€'+x.price.toFixed(2)+'</td><td>'+eur(x.price*r.units)+'</td><td>'+x.lead+' days</td><td>'+x.terms+'</td><td>'+(canAward?'<button class="btn btn-ink btn-sm" type="button" data-award="'+esc(x.s)+'">Award</button>':'')+'</td></tr>';
+          return '<tr style="cursor:default"><td><b>'+esc(x.s)+'</b>'+(r.award===x.s?' <span class="pill p-ok">Awarded</span>':'')+'</td><td>$'+x.price.toFixed(2)+'</td><td>'+usd(x.price*r.units)+'</td><td>'+x.lead+' days</td><td>'+x.terms+'</td><td>'+(canAward?'<button class="btn btn-ink btn-sm" type="button" data-award="'+esc(x.s)+'">Award</button>':'')+'</td></tr>';
         }).join('')+'</tbody></table></div>' : '';
       var waiting = r.sup.filter(function(s){ return !r.quotes.some(function(x){ return x.s===s; }); });
       return '<div class="panel"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><div><span class="v-id">'+r.id+'</span><h3>'+esc(r.item)+'</h3><div style="color:var(--dim);font-size:14px">'+esc(r.qty)+' · quotes due '+r.due+'</div></div><span class="pill '+stCls(r.status)+'">'+r.status+'</span></div>'+
@@ -207,7 +207,7 @@
     function vApv(){
       var cards = APV.map(function(a){
         var steps = a.steps.map(function(st, i){ return '<span class="'+(i<a.step || a.status==='Approved' ? 'done' : i===a.step && a.status==='Pending' ? 'cur' : '')+'">'+st+'</span>'; }).join('');
-        return '<div class="panel apv"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><div><span class="v-id">'+a.id+' · '+a.type+'</span><h3 style="font-size:17px">'+esc(a.title)+'</h3><div style="color:var(--dim);font-size:13.5px">Requested by '+esc(a.by)+(a.amount?' · '+eur(a.amount):'')+'</div></div><span class="pill '+stCls(a.status)+'">'+a.status+'</span></div>'+
+        return '<div class="panel apv"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><div><span class="v-id">'+a.id+' · '+a.type+'</span><h3 style="font-size:17px">'+esc(a.title)+'</h3><div style="color:var(--dim);font-size:13.5px">Requested by '+esc(a.by)+(a.amount?' · '+usd(a.amount):'')+'</div></div><span class="pill '+stCls(a.status)+'">'+a.status+'</span></div>'+
           '<div class="v-steps">'+steps+'</div>'+
           (a.status==='Pending' ? '<div class="btn-row"><button class="btn btn-ink btn-sm" type="button" data-apv="'+a.id+'" data-d="ok">Approve '+a.steps[a.step].toLowerCase()+' step</button><button class="btn btn-ghost btn-sm" type="button" data-apv="'+a.id+'" data-d="no">Reject</button></div>' : '')+'</div>';
       }).join('');
@@ -321,7 +321,7 @@
           var scored = r3.quotes.map(function(x){ var s = sup(x.s), minP = Math.min.apply(null, r3.quotes.map(function(y){return y.price;})), minL = Math.min.apply(null, r3.quotes.map(function(y){return y.lead;}));
             return {x:x, score: Math.round((minP/x.price)*50 + (minL/x.lead)*25 + (100-s.risk)/4)}; }).sort(function(a,b){ return b.score-a.score; });
           var best = scored[0];
-          typeInto($('#r-ai', ven), '<div class="ai-box"><div class="ai-h">AI recommendation</div><ul>'+scored.map(function(s){ return '<li><b>'+esc(s.x.s)+'</b>: score '+s.score+' (€'+s.x.price.toFixed(2)+', '+s.x.lead+' days, '+lvlTxt[sup(s.x.s).lvl].toLowerCase()+' supplier risk)</li>'; }).join('')+'</ul><p style="margin-top:8px"><b>Recommended:</b> award to '+esc(best.x.s)+'. It balances price, lead time and supplier risk best.</p></div>');
+          typeInto($('#r-ai', ven), '<div class="ai-box"><div class="ai-h">AI recommendation</div><ul>'+scored.map(function(s){ return '<li><b>'+esc(s.x.s)+'</b>: score '+s.score+' ($'+s.x.price.toFixed(2)+', '+s.x.lead+' days, '+lvlTxt[sup(s.x.s).lvl].toLowerCase()+' supplier risk)</li>'; }).join('')+'</ul><p style="margin-top:8px"><b>Recommended:</b> award to '+esc(best.x.s)+'. It balances price, lead time and supplier risk best.</p></div>');
           break;
         case 'cmp-ai':
           var txt = $('#c-issue', ven).value;
@@ -445,14 +445,14 @@
     /* recruiting */
     var STAGES = ['Applied','Screening','Interview','Offer'];
     var C = [
-      {n:'Lena Hoffmann', r:'fe', st:0, yrs:5, skills:{React:5,TypeScript:5,Testing:3,Accessibility:3}, note:'Led a design-system migration; strong accessibility focus.'},
-      {n:'Marco Silva', r:'fe', st:0, yrs:2, skills:{React:3,TypeScript:2,Testing:2,Accessibility:1}, note:'Junior profile, quick learner, limited TypeScript experience.'},
-      {n:'Aylin Demir', r:'fe', st:1, yrs:7, skills:{React:5,TypeScript:4,Testing:5,Accessibility:3}, note:'Senior engineer from e-commerce; owned CI test strategy.'},
-      {n:'Jonas Weber', r:'fe', st:2, yrs:4, skills:{React:4,TypeScript:4,Testing:3,Accessibility:3}, note:'Solid all-rounder; available in 4 weeks.'},
-      {n:'Priya Nair', r:'fe', st:3, yrs:6, skills:{React:5,TypeScript:5,Testing:3,Accessibility:5}, note:'Excellent technical interview; salary expectation within band.'},
-      {n:'Tom Becker', r:'sm', st:0, yrs:8, skills:{'B2B sales':5,Negotiation:4,CRM:4,Languages:5}, note:'Exceeded quota three years running in industrial SaaS.'},
-      {n:'Sara Kovač', r:'sm', st:1, yrs:3, skills:{'B2B sales':3,Negotiation:3,CRM:5,Languages:3}, note:'Strong CRM hygiene; less enterprise experience.'},
-      {n:'Felix Braun', r:'sm', st:2, yrs:10, skills:{'B2B sales':5,Negotiation:5,CRM:2,Languages:5}, note:'Enterprise closer; wants a team-lead path.'}
+      {n:'Laura White', r:'fe', st:0, yrs:5, skills:{React:5,TypeScript:5,Testing:3,Accessibility:3}, note:'Led a design-system migration; strong accessibility focus.'},
+      {n:'Daniel Clark', r:'fe', st:0, yrs:2, skills:{React:3,TypeScript:2,Testing:2,Accessibility:1}, note:'Junior profile, quick learner, limited TypeScript experience.'},
+      {n:'Julia Young', r:'fe', st:1, yrs:7, skills:{React:5,TypeScript:4,Testing:5,Accessibility:3}, note:'Senior engineer from e-commerce; owned CI test strategy.'},
+      {n:'Michael Brown', r:'fe', st:2, yrs:4, skills:{React:4,TypeScript:4,Testing:3,Accessibility:3}, note:'Solid all-rounder; available in 4 weeks.'},
+      {n:'Lisa Miller', r:'fe', st:3, yrs:6, skills:{React:5,TypeScript:5,Testing:3,Accessibility:5}, note:'Excellent technical interview; salary expectation within band.'},
+      {n:'John Smith', r:'sm', st:0, yrs:8, skills:{'B2B sales':5,Negotiation:4,CRM:4,Languages:5}, note:'Exceeded quota three years running in industrial SaaS.'},
+      {n:'Sarah Johnsonč', r:'sm', st:1, yrs:3, skills:{'B2B sales':3,Negotiation:3,CRM:5,Languages:3}, note:'Strong CRM hygiene; less enterprise experience.'},
+      {n:'Mark Lewis', r:'sm', st:2, yrs:10, skills:{'B2B sales':5,Negotiation:5,CRM:2,Languages:5}, note:'Enterprise closer; wants a team-lead path.'}
     ];
     var ROLE = {fe:{t:'Frontend Engineer', need:{React:5,TypeScript:5,Testing:4,Accessibility:4}, yrs:5}, sm:{t:'Sales Manager EMEA', need:{'B2B sales':5,Negotiation:5,CRM:4,Languages:5}, yrs:6}};
     C.forEach(function(c){
@@ -490,16 +490,16 @@
     }
     $('#role', hr).addEventListener('change', function(e){ role = e.target.value; var first = C.filter(function(c){return c.r===role;}).sort(function(a,b){return b.score-a.score;})[0]; showCand(first.n); });
     $('#kanban', hr).addEventListener('click', function(e){ var b = e.target.closest('.cand'); if(b) showCand(b.dataset.n); });
-    renderBoard(); showCand('Priya Nair');
+    renderBoard(); showCand('Lisa Miller');
 
     /* leave */
     var DAYS = ['Mo 7','Tu 8','We 9','Th 10','Fr 11','Mo 14','Tu 15','We 16','Th 17','Fr 18'];
     var TEAM = [
-      {n:'Anna Schulz', on:[0,1,2], st:'approved'},
-      {n:'David Klein', on:[3,4,5,6], st:'pending', reason:'Family visit', bal:14},
-      {n:'Mia Wagner', on:[5,6,7], st:'pending', reason:'Vacation', bal:9},
-      {n:'Lukas Fischer', on:[8,9], st:'pending', reason:'Training course', bal:21},
-      {n:'Emre Yilmaz', on:[], st:'none'}
+      {n:'Anna Moore', on:[0,1,2], st:'approved'},
+      {n:'David Wilson', on:[3,4,5,6], st:'pending', reason:'Family visit', bal:14},
+      {n:'Emma Davis', on:[5,6,7], st:'pending', reason:'Vacation', bal:9},
+      {n:'James Taylor', on:[8,9], st:'pending', reason:'Training course', bal:21},
+      {n:'Chris Walker', on:[], st:'none'}
     ];
     var MINSTAFF = 3;
     function renderLeave(){
@@ -535,7 +535,7 @@
       {re:/(vacation|holiday|leave|days off|annual)/i, a:'Full-time employees receive <b>30 days</b> of paid annual leave per calendar year. Up to 5 unused days carry over until 31 March of the following year.', src:'Example Handbook §4.1 Annual leave'},
       {re:/(sick|ill|doctor|medical)/i, a:'Report sickness to your manager before your shift starts. From the <b>third day</b> of absence, a medical certificate is required.', src:'Example Handbook §4.3 Sick leave'},
       {re:/(remote|home office|work from home|wfh|hybrid)/i, a:'You can work remotely up to <b>3 days per week</b> after agreeing with your team lead. Working from abroad needs HR approval for each stay.', src:'Example Handbook §5.2 Hybrid work'},
-      {re:/(expense|travel|reimburse|mileage|receipt)/i, a:'Submit expenses within <b>30 days</b> with receipts attached. Private car use is reimbursed at €0.30 per km.', src:'Example Handbook §7.1 Travel & expenses'},
+      {re:/(expense|travel|reimburse|mileage|receipt)/i, a:'Submit expenses within <b>30 days</b> with receipts attached. Private car use is reimbursed at $0.30 per km.', src:'Example Handbook §7.1 Travel & expenses'},
       {re:/(parental|maternity|paternity|baby|child)/i, a:'Parental leave follows the statutory rules. Notify HR at least <b>7 weeks</b> before the planned start so we can arrange cover.', src:'Example Handbook §4.6 Parental leave'},
       {re:/(onboard|first day|laptop|new hire|equipment)/i, a:'New hires receive their laptop and accounts on <b>day one</b>. Your onboarding buddy and a 30-60-90 day plan are assigned in the HR portal.', src:'Example Handbook §2.1 Onboarding'}
     ];
@@ -588,7 +588,7 @@
       }[p.cat];
       return '<svg viewBox="0 0 160 120" aria-hidden="true"><ellipse cx="80" cy="108" rx="62" ry="6" fill="'+sh+'"/>'+body+'</svg>';
     };
-    var money = function(n){ return '€' + n.toLocaleString('en-US'); };
+    var money = function(n){ return '$' + n.toLocaleString('en-US'); };
     var st = {cat:'All', mat:'All', max:1500, sort:'pop', q:''}, cart = [], ship = 'std', assembly = false, addr = {}, orderNo = 4100;
     var grid = $('#s-grid', shop), panel = $('#s-panel', shop), scrim = $('#s-scrim', shop), lastFocus;
     var byId = function(id){ return P.filter(function(p){ return p.id===id; })[0]; };
@@ -670,7 +670,7 @@
 
     /* AI room advisor */
     function advise(q){
-      var budget = (q.match(/(?:€|eur|under|below|max)\s*([\d.,]+)/i) || q.match(/([\d.,]{3,})\s*(?:€|eur)/i) || [])[1];
+      var budget = (q.match(/(?:\$|€|usd|eur|under|below|max)\s*([\d.,]+)/i) || q.match(/([\d.,]{3,})\s*(?:\$|€|usd|eur)/i) || [])[1];
       budget = budget ? parseInt(budget.replace(/[.,]/g,''),10) : 2500;
       var want = [], why = [];
       var pick = function(cat, pref){ var c = P.filter(function(p){ return p.cat===cat && want.indexOf(p)<0; }); if(pref) c.sort(function(a,b){ return (pref(b)?1:0)-(pref(a)?1:0); }); return c; };
@@ -742,7 +742,7 @@
     shop.addEventListener('keydown', function(e){ if(e.key==='Escape' && !panel.hidden) close(); });
     scrim.addEventListener('click', close);
     renderGrid();
-    showAdvice('Small living room, light wood, under €1,500');
+    showAdvice('Small living room, light wood, under $1,500');
   }
   })();
 
@@ -755,7 +755,7 @@
     var J = [
       {id:'J-5201', type:'Delivery', title:'Deliver 2 pallets of floor tiles', cust:'Reed Building Supplies', addr:'Harbour Street 12', x:66, y:30, status:'Assigned', eta:'10:30',
        check:['2 pallets unloaded','Packaging undamaged','Placed at agreed spot']},
-      {id:'J-5202', type:'Service', title:'Annual boiler maintenance', cust:'Lea Hart', addr:'Linden Avenue 4', x:24, y:62, status:'Assigned', eta:'13:00',
+      {id:'J-5202', type:'Service', title:'Annual boiler maintenance', cust:'Kate Hall', addr:'Linden Avenue 4', x:24, y:62, status:'Assigned', eta:'13:00',
        check:['Burner cleaned','Pressure checked (1.5 bar)','Exhaust values measured','Customer briefed']},
       {id:'J-5203', type:'Inspection', title:'Elevator safety inspection', cust:'Parkside Offices', addr:'Park Road 88', x:80, y:74, status:'Done', eta:'08:15',
        check:['Brakes tested','Door sensors OK','Emergency call tested'],
@@ -929,7 +929,7 @@
       }[c.body];
       return '<svg viewBox="0 0 180 104" aria-hidden="true"><ellipse cx="90" cy="96" rx="78" ry="5" fill="rgba(14,27,34,.12)"/>'+b+'<rect x="18" y="68" width="10" height="4" rx="2" fill="#FFE6A8"/>'+w+'</svg>';
     };
-    var money = function(n){ return '€' + Math.round(n).toLocaleString('en-US'); };
+    var money = function(n){ return '$' + Math.round(n).toLocaleString('en-US'); };
     var kmf = function(n){ return n.toLocaleString('en-US') + ' km'; };
     var rating = function(c){ var d = c.market - c.price; return d >= 1200 ? ['Great price','p-ok'] : d >= 0 ? ['Fair price','p-info'] : ['Above market','p-warn']; };
     var f = {make:'All', body:'All', fuel:'All', max:45000, kmMax:100000, sort:'best'}, saved = [], cmp = [], reserved = [], lastF;
@@ -991,7 +991,7 @@
     }
     function aiSearch(q){
       var o = {make:'All', body:'All', fuel:'All', max:45000, kmMax:100000, sort:'best'}, why = [];
-      var m = q.match(/(?:under|below|max|up to|€)\s*€?\s*([\d.,]+)\s*(k)?/i); if(m){ o.max = parseInt(m[1].replace(/[.,]/g,''),10) * (m[2]?1000:1); if(o.max < 1000) o.max *= 1000; why.push('under '+money(o.max)); }
+      var m = q.match(/(?:under|below|max|up to|\$|€)\s*[$€]?\s*([\d.,]+)\s*(k)?/i); if(m){ o.max = parseInt(m[1].replace(/[.,]/g,''),10) * (m[2]?1000:1); if(o.max < 1000) o.max *= 1000; why.push('under '+money(o.max)); }
       if(/electric|ev\b/i.test(q)){ o.fuel = 'Electric'; why.push('electric'); } else if(/hybrid/i.test(q)){ o.fuel = 'Hybrid'; why.push('hybrid'); } else if(/diesel/i.test(q)){ o.fuel = 'Diesel'; why.push('diesel'); }
       if(/suv|family|kids|space/i.test(q)){ o.body = /estate|wagon|kombi|touring/i.test(q) ? 'Estate' : 'SUV'; why.push(o.body==='SUV'?'SUV for space':'estate'); }
       else if(/estate|wagon|touring|boot/i.test(q)){ o.body = 'Estate'; why.push('estate with a big boot'); }

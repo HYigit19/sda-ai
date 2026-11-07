@@ -220,6 +220,38 @@ USE_CASES = [
     how=[("Review candidates", "Open a candidate to see the skill match and suggested interview questions."), ("Approve leave", "The coverage check warns you before the team is short-staffed."), ("Ask the assistant", "Employees get policy answers with the source section.")],
     services=["ai-agents", "workflow-automation", "web-applications"]),
 ]
+IND_ICON = lambda d: f'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">{d}</svg>'
+INDUSTRIES = [
+  dict(slug="manufacturing", name="Manufacturing",
+    icon=IND_ICON('<path d="M3 21V10l6 4V10l6 4V6l6-3v18H3z"/><path d="M7 17h2M12 17h2M17 17h1"/>'),
+    line="Supplier quality, complaints and production data in one connected flow.",
+    links=[("Vendor management demo", "use-cases/vendor-management.html"), ("SAP integration", "services/sap-integration.html")]),
+  dict(slug="logistics", name="Logistics & wholesale",
+    icon=IND_ICON('<path d="M3 6h11v10H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="2"/><circle cx="17.5" cy="18" r="2"/>'),
+    line="Order intake, proof of delivery and customer updates without manual steps.",
+    links=[("Field service demo", "use-cases/field-service.html"), ("Workflow automation", "services/workflow-automation.html")]),
+  dict(slug="construction", name="Construction & field service",
+    icon=IND_ICON('<path d="M4 18h16M6 18v-3a6 6 0 0 1 12 0v3M12 9V5M9 6l3-1 3 1"/>'),
+    line="Jobs, photos, timesheets and signatures from the site straight to the invoice.",
+    links=[("Field service demo", "use-cases/field-service.html"), ("Mobile & field apps", "services/mobile-apps.html")]),
+  dict(slug="real-estate", name="Real estate & facilities",
+    icon=IND_ICON('<path d="M4 21V5l8-3v19M12 9h8v12M7.5 8h1M7.5 12h1M7.5 16h1M15.5 13h1M15.5 17h1M2 21h20"/>'),
+    line="Tickets, assets, inspections and service partners under one roof.",
+    links=[("Facility management demo", "use-cases/facility-management.html"), ("Custom web apps", "services/web-applications.html")]),
+  dict(slug="professional-services", name="Professional services",
+    icon=IND_ICON('<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/>'),
+    line="Documents, knowledge and client requests answered in minutes, not days.",
+    links=[("AI agents & assistants", "services/ai-agents.html"), ("Data management", "services/data-management.html")]),
+  dict(slug="energy", name="Energy & utilities",
+    icon=IND_ICON('<path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/>'),
+    line="Field crews, asset data and maintenance plans connected to your core systems.",
+    links=[("Mobile & field apps", "services/mobile-apps.html"), ("SAP integration", "services/sap-integration.html")]),
+]
+
+def industries_block(r):
+    cards = "".join(f"""<article class="ind glass" id="ind-{i['slug']}"><span class="ind-ic" aria-hidden="true">{i['icon']}</span><h3>{e(i['name'])}</h3><p>{e(i['line'])}</p><div class="ind-links">{"".join(f'<a href="{r}{h}">{e(t)} <span class="arr">→</span></a>' for t, h in i['links'])}</div></article>""" for i in INDUSTRIES)
+    return f"""<div class="sec-head"><h2>Built for your industry</h2><p>The same building blocks, shaped around the processes, data and rules of your sector.</p></div><div class="inds">{cards}</div>"""
+
 UC_ICONS = {
   "vendor-management": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-5 9 5-9 5-9-5z"/><path d="M3 9v6l9 5 9-5V9M12 14v6"/></svg>',
   "field-service": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>',
@@ -294,6 +326,7 @@ def nav(r, active):
     {logo(r)}
     <ul class="menu">
       <li class="m-ind" aria-hidden="true"></li>
+      <li><a href="{r}index.html"{cur("home")}>Home</a></li>
       <li class="has-drop"><a href="{r}services/index.html"{cur("services")}>Services <svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a><ul class="drop mega glass-strong">{drop}</ul></li>
       <li><a href="{r}use-cases/index.html"{cur("use-cases")}><i class="pulse-dot" aria-hidden="true"></i>Live demos</a></li>
       <li><a href="{r}index.html#process">Process</a></li>
@@ -309,14 +342,14 @@ def nav(r, active):
 
 def footer(r, demo=False):
     svc = "".join(f'<li><a href="{r}services/{s["slug"]}.html">{e(s["name"])}</a></li>' for s in SERVICES)
-    ucs = "".join(f'<li><a href="{r}use-cases/{u["slug"]}.html">{e(u["name"])}</a></li>' for u in USE_CASES)
+    inds = "".join(f'<li><a href="{r}index.html#ind-{i["slug"]}">{e(i["name"])}</a></li>' for i in INDUSTRIES)
     demo_js = f'\n<script src="{r}assets/demos.js?v={ASSET_V}"></script>' if demo else ""
     return f"""<footer>
   <div class="wrap">
     <div class="foot glass">
       <div>{logo(r)}<p>AI software, web and app development for companies that want working systems in production.</p></div>
       <div><h4>Services</h4><ul>{svc}</ul></div>
-      <div><h4>Use cases</h4><ul>{ucs}</ul></div>
+      <div><h4>Industries</h4><ul>{inds}</ul></div>
       <div><h4>Company</h4><ul><li><a href="{r}index.html#process">Process</a></li><li><a href="{r}index.html#stack">Technology</a></li><li><a href="{r}contact.html">Contact</a></li><li>{EMAIL}</li></ul></div>
     </div>
     <div class="foot-base"><span>© <span id="yr">2026</span> {BRAND}</span><span><a href="{r}privacy.html">Privacy policy</a> · <a href="{r}legal-notice.html">Legal notice</a></span></div>
@@ -329,7 +362,8 @@ def cta_band(r, h="Ready to put AI to work?", p="Tell us about your process. We 
 <div class="cta-row"><a class="btn btn-primary" href="{r}contact.html">Book a discovery call <span class="arr">→</span></a><a class="btn btn-glass" href="{r}use-cases/index.html">Try the live demos</a></div></div></div></section>"""
 
 def crumbs(r, items):
-    li = "".join(f'<li><a href="{r}{href}">{e(n)}</a></li>' if href else f'<li aria-current="page">{e(n)}</li>' for n, href in items)
+    home_ic = '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 9 10 3.5 16.5 9v7.5h-4.5V12H8v4.5H3.5z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>'
+    li = "".join((f'<li><a href="{r}{href}">{home_ic if n == "Home" else ""}<span>{e(n)}</span></a></li>' if href else f'<li aria-current="page"><span>{e(n)}</span></li>') for n, href in items)
     return f'<nav aria-label="Breadcrumb"><ol class="crumbs">{li}</ol></nav>'
 
 def crumb_ld(items):
@@ -395,7 +429,7 @@ MINI = {
   "facility-management": '<div class="mini"><div class="mini-top">Facility Desk</div><div class="mini-floor"><div></div><div></div><div class="w"></div><div></div><div></div><div class="x"></div><div></div><div></div><div></div><div></div><div class="w"></div><div></div></div>'
       + _mai("“Water leaking in the kitchen” → Plumbing · High · today") + "</div>",
   "hr-tool": '<div class="mini"><div class="mini-top">People Desk</div><div class="mini-kan"><div><i class="s"></i><i></i><i></i></div><div><i></i><i class="s"></i></div><div><i></i><i></i></div><div><i class="s"></i></div></div>'
-      + _mai("Priya Nair: 96% match. Suggested question on testing strategy.") + "</div>",
+      + _mai("Lisa Miller: 96% match. Suggested question on testing strategy.") + "</div>",
 }
 
 def uc_switch(r):
@@ -507,6 +541,8 @@ def home():
   <div class="sec-head"><h2>Try it before you talk to us</h2><p>Four working demos of the kind of software we build. Click through them right here: they run in your browser on example data.</p></div>
   {uc_switch(r)}
 </div></section>
+
+<section class="block" id="industries" style="padding-top:20px"><div class="wrap">{industries_block(r)}</div></section>
 
 <section class="block" id="process" style="padding-top:20px"><div class="wrap">
   <div class="sec-head"><h2>From idea to production in five steps</h2><p>Short cycles, working software at every checkpoint, and a fixed scope for each phase so budget and timeline stay predictable.</p></div>
