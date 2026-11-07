@@ -500,7 +500,7 @@ def home():
 </div></section>
 
 <section class="block" id="use-cases" style="padding-top:20px"><div class="wrap">
-  <div class="sec-head"><h2>Try it before you talk to us</h2><p>Four working demos of the kind of software we build. Click through them right here: they run in your browser on example data.</p></div>
+  <div class="sec-head"><h2>Try it before you talk to us</h2><p>{["Four","Five","Six","Seven","Eight"][len(USE_CASES)-4] if 4 <= len(USE_CASES) <= 8 else len(USE_CASES)} working demos of the kind of software we build. Pick one, switch between the roles and click through it: everything runs in your browser on example data.</p></div>
   {uc_switch(r)}
 </div></section>
 
