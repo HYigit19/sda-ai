@@ -251,20 +251,16 @@ CHECK = '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.
 
 _logo_n = [0]
 def logo_svg(cls="logo-svg"):
-    """Cloud logo (from the brand artwork), drawn with the theme colours."""
-    _logo_n[0] += 1
-    g = f"lg{_logo_n[0]}"
-    return (f'<svg class="{cls}" viewBox="0 0 172 56" role="img" aria-label="{BRAND}"><defs><linearGradient id="{g}" x1="0" y1="1" x2="1" y2="0">'
-            f'<stop offset="0" style="stop-color:var(--teal)"/><stop offset="1" style="stop-color:var(--teal-glow)"/></linearGradient></defs>'
-            f'<circle cx="28" cy="28" r="27" fill="url(#{g})"/>'
-            '<path d="M17.5 34.5a6.6 6.6 0 0 1 .9-13.1 9.6 9.6 0 0 1 18.4-3 7.6 7.6 0 0 1 3.3 16.1z" fill="#fff" fill-opacity=".95"/>'
-            '<path d="M26.5 20.2a7.4 7.4 0 0 1 9.6 6.6 7 7 0 0 0-6.6 7.7h-4.4a8.7 8.7 0 0 1 1.4-14.3z" fill="#fff" fill-opacity=".55" style="mix-blend-mode:multiply"/>'
-            '<g fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"><path d="M23 34.5v3.6h-4"/><path d="M28 34.5v6.4"/><path d="M33 34.5v3.6h4"/></g>'
-            '<circle cx="17" cy="38.1" r="1.9" fill="none" stroke="#fff" stroke-width="1.5"/>'
-            '<circle cx="28" cy="42.8" r="2.3" style="fill:var(--coral)" stroke="#fff" stroke-width="1.4"/>'
-            '<circle cx="39" cy="38.1" r="1.9" style="fill:var(--coral)" stroke="#fff" stroke-width="1.3"/>'
-            '<text x="64" y="31" font-family="Geist, system-ui, sans-serif" font-size="28" font-weight="800" letter-spacing="-.5" style="fill:var(--ink)">SDA</text>'
-            '<text x="65" y="46.5" font-family="Geist, system-ui, sans-serif" font-size="9.4" font-weight="600" letter-spacing="2.9" style="fill:var(--teal)">AI SERVICES</text></svg>')
+    """Bracket logo: orange code brackets with a dark slash, SDA / AI SERVICES / tagline."""
+    k = 56 / 405
+    return (f'<svg class="{cls}" viewBox="0 0 236 58" role="img" aria-label="{BRAND}">'
+            f'<g transform="translate(0 1) scale({k:.5f})">'
+            '<path d="M200 2V69L72 199l73 73v75L2 204z" style="fill:var(--teal-2)"/>'
+            '<path d="M270 52l147 147-202 203v-73l130-130-75-75z" style="fill:var(--teal-2)"/>'
+            '<path d="M225 130h28l-61 142h-30z" fill="#0B1F2A"/></g>'
+            '<text x="70" y="27" font-family="Geist, system-ui, sans-serif" font-size="31" font-weight="800" letter-spacing="-.2" fill="#0B1F2A">SDA</text>'
+            '<text x="71" y="41.5" font-family="Geist, system-ui, sans-serif" font-size="10.4" font-weight="700" letter-spacing="4.4" style="fill:var(--teal-2)">AI SERVICES</text>'
+            '<text x="71" y="53" font-family="Geist, system-ui, sans-serif" font-size="6.1" font-weight="600" letter-spacing=".85" fill="#5E6068">SOFTWARE DEVELOPMENT APPLICATION</text></svg>')
 
 def logo(r):
     return f'<a class="logo" href="{r}index.html" aria-label="{BRAND} home">{logo_svg()}</a>'
