@@ -190,7 +190,8 @@ SERVICES = [
 # The order here is the order on the site.
 import importlib.util as _ilu
 DEMO_DIR = ROOT / "src" / "demos"
-DEMO_ORDER = ["vendor-management", "field-service", "facility-management", "hr-tool"]
+DEMO_ORDER = ["workflow-management", "field-service", "hr-tool", "real-estate", "dashboard", "vendor-management", "facility-management"]
+DEMO_ORDER = [s for s in DEMO_ORDER if (ROOT / "src" / "demos" / s / "demo.js").exists()]  # skip demos still in progress
 def _load(slug, name):
     spec = _ilu.spec_from_file_location(f"demo_{slug.replace('-', '_')}_{name}", DEMO_DIR / slug / f"{name}.py")
     mod = _ilu.module_from_spec(spec); spec.loader.exec_module(mod); return mod
@@ -623,7 +624,7 @@ def uc_page(u):
   <div class="sec-head left" style="margin-bottom:28px"><h2>More demos</h2></div>
   <div class="related" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">{others}</div>
 </div></section>
-{cta_band(r, f"Want this for your {e(u['label'].lower())} team?", "We adapt the demo to your data and systems, usually starting with a two-week prototype.")}"""
+{cta_band(r, e(u.get('cta') or f"Want this for your {u['label'].lower()} team?"), "We adapt the demo to your data and systems, usually starting with a two-week prototype.")}"""
     ld = [crumb_ld([("Home", ""), ("Use cases", "use-cases/"), (u["name"], path)]),
           {"@context": "https://schema.org", "@type": "SoftwareApplication", "name": f"{u['name']} demo", "applicationCategory": "BusinessApplication",
            "operatingSystem": "Web", "description": u["meta"], "url": f"{SITE_URL}/{path}", "creator": {"@type": "Organization", "name": BRAND}}]

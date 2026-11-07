@@ -1,1 +1,277 @@
-/* Facility Management demo styles */
+/* Facility Management demo styles – every selector is scoped to #demo-facility */
+/* no backdrop blur on this shell: it would trap the fixed-position dialogs and toasts inside the demo box */
+#demo-facility.demo-shell{backdrop-filter:none;-webkit-backdrop-filter:none;background:rgba(255,255,255,.9)}
+#demo-facility .fac-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;margin:0}
+#demo-facility .fac-loading{padding:40px;text-align:center;color:var(--dim)}
+#demo-facility .fac-main{padding:18px;min-width:0}
+#demo-facility .btn-sm{min-height:44px}
+#demo-facility .btn svg{width:16px;height:16px;flex:none}
+#demo-facility h5{font-size:13px;font-weight:600;margin:16px 0 8px;display:flex;align-items:center;gap:6px;color:var(--ink)}
+#demo-facility h5 svg{width:15px;height:15px;color:var(--teal)}
+#demo-facility textarea{min-height:72px;font-size:15px;padding:11px 13px}
+#demo-facility select,#demo-facility input[type=number]{min-height:44px;padding:9px 12px;font-size:14.5px}
+#demo-facility .fac-p-low{background:rgba(14,27,34,.06);color:var(--ink-2)}
+
+/* cards and layout */
+#demo-facility .fac-card{border:1px solid var(--line);border-radius:var(--r-md);padding:18px;background:#fff;min-width:0;box-shadow:var(--shadow-sm)}
+#demo-facility .fac-card h3{font-size:18px}
+#demo-facility .fac-card h4{font-size:13px;font-weight:500;color:var(--dim);margin:18px 0 8px}
+#demo-facility .fac-card-h{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+#demo-facility .fac-sub{font-size:13.5px;color:var(--dim);margin:4px 0 12px;line-height:1.5}
+#demo-facility .fac-col{display:grid;gap:16px;align-content:start;min-width:0}
+#demo-facility .fac-emp{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:16px;align-items:start}
+#demo-facility .fac-ov{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px;align-items:start}
+#demo-facility .fac-tech{display:grid;grid-template-columns:400px minmax(0,1fr);gap:20px;align-items:start}
+#demo-facility .fac-empty{color:var(--dim);font-size:14px;padding:18px;text-align:center;list-style:none;border:1px dashed var(--line-2);border-radius:var(--r-sm)}
+#demo-facility .fac-id{font:500 12px var(--f-mono);color:var(--dim);white-space:nowrap}
+#demo-facility .fac-hintline{font-size:13px;color:var(--dim);margin-top:8px}
+#demo-facility .fac-simtag{display:inline-flex;align-items:center;font:500 11.5px var(--f-body);padding:3px 9px;border-radius:999px;background:#fff;color:var(--coral-ink);border:1px solid var(--coral-soft)}
+#demo-facility .fac-tbc{display:inline-flex;align-items:center;gap:5px;font-weight:600;color:var(--warn)}
+#demo-facility .fac-tbc svg{width:15px;height:15px}
+#demo-facility .fac-link{background:none;border:0;padding:6px 4px;min-height:32px;font:500 13.5px var(--f-body);color:var(--teal);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+#demo-facility .fac-err{margin-top:10px;padding:10px 12px;border-radius:12px;background:var(--bad-soft);color:var(--bad);font-size:13.5px}
+#demo-facility .fac-dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 14px;margin:10px 0 0;font-size:14px}
+#demo-facility .fac-dl dt{color:var(--dim)}
+#demo-facility .fac-dl dd{margin:0;min-width:0;overflow-wrap:anywhere}
+#demo-facility .fac-dl small{color:var(--dim)}
+
+/* chips and form bits */
+#demo-facility .fac-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+#demo-facility .fac-chips button,#demo-facility .fac-upl{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:8px 14px;border-radius:999px;border:1px solid var(--line-2);background:#fff;font:14px var(--f-body);color:var(--ink);cursor:pointer;text-align:left;transition:border-color .2s, background .2s}
+#demo-facility .fac-chips button:hover,#demo-facility .fac-upl:hover{border-color:var(--teal-2);background:var(--teal-soft)}
+#demo-facility .fac-chips button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+#demo-facility .fac-chips svg,#demo-facility .fac-upl svg{width:16px;height:16px;color:var(--teal)}
+#demo-facility .fac-chips button[aria-pressed="true"] svg{color:var(--teal-glow)}
+#demo-facility .fac-upl{position:relative}
+#demo-facility .fac-upl input{position:absolute;inset:0;opacity:0;width:100%;height:100%;min-height:0;padding:0;cursor:pointer}
+#demo-facility .fac-upl:focus-within{outline:2px solid var(--teal-2);outline-offset:3px}
+#demo-facility .fac-lbl{display:grid;gap:6px;font-size:14px;font-weight:500;color:var(--ink-2);margin-top:8px}
+#demo-facility .fac-lbl2{font-size:13px;font-weight:500;color:var(--dim);margin-top:14px}
+#demo-facility .fac-sel{display:grid;gap:6px;font-size:13.5px;font-weight:500;margin-top:10px}
+#demo-facility .fac-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#demo-facility .fac-attached{display:flex;align-items:center;gap:12px;margin-top:6px;padding:8px;border:1px solid var(--line);border-radius:var(--r-sm);font-size:13.5px}
+#demo-facility .fac-attached img{width:72px;height:54px;object-fit:cover;border-radius:10px}
+#demo-facility .fac-attached span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* AI triage drafts */
+#demo-facility .fac-ai{margin-top:16px}
+#demo-facility .fac-ai .ai-h{justify-content:flex-start;gap:8px;flex-wrap:wrap}
+#demo-facility .fac-multi{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px;font-size:14px}
+#demo-facility .fac-multi p{flex:1 1 220px}
+#demo-facility .fac-draft{background:#fff;border-radius:var(--r-sm);padding:14px;margin-top:10px;border:1px solid rgba(255,255,255,.9);box-shadow:var(--shadow-sm)}
+#demo-facility .fac-draft.dropped{display:flex;align-items:center;justify-content:space-between;gap:10px;color:var(--dim);font-size:14px;padding:8px 14px}
+#demo-facility .fac-draft-h{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px}
+#demo-facility .fac-draft-t{font-size:15px;color:var(--ink);margin-top:6px}
+#demo-facility .fac-ask{font-size:13.5px;margin:6px 0 0}
+#demo-facility .fac-conf{display:flex;gap:10px;margin-top:12px;padding:10px 12px;border-radius:12px;background:var(--warn-soft);font-size:13.5px}
+#demo-facility .fac-conf > svg{width:18px;height:18px;flex:none;color:var(--warn);margin-top:2px}
+#demo-facility .fac-note,#demo-facility .fac-aisug{display:flex;gap:8px;margin-top:10px;font-size:13.5px;color:var(--ink-2)}
+#demo-facility .fac-note svg,#demo-facility .fac-aisug svg{width:16px;height:16px;flex:none;color:var(--teal);margin-top:2px}
+#demo-facility .fac-aisug{padding:10px 12px;border-radius:12px;background:var(--teal-soft)}
+#demo-facility .fac-pick{grid-template-rows:repeat(4,44px);margin-top:10px;gap:4px}
+#demo-facility .fac-pick .room{font-size:12px;padding:4px 8px;display:flex;align-items:center;line-height:1.15}
+#demo-facility .fac-pick .room.fac-hint{border-color:var(--coral);box-shadow:inset 0 0 0 1px var(--coral)}
+#demo-facility .fac-pick .room[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+/* employee: my tickets */
+#demo-facility .fac-mts{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+#demo-facility .fac-mt{border:1px solid var(--line);border-radius:var(--r-sm);background:#fff;overflow:hidden}
+#demo-facility .fac-mt.open{border-color:var(--teal-2);box-shadow:0 0 0 3px var(--teal-soft)}
+#demo-facility .fac-mt-h{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:start;width:100%;padding:12px;border:0;background:none;font:inherit;text-align:left;color:var(--ink);cursor:pointer;min-height:44px}
+#demo-facility .fac-mt-h .fac-id{padding-top:3px}
+#demo-facility .fac-mt-t b{display:block;font-weight:500;font-size:14.5px;line-height:1.35}
+#demo-facility .fac-mt-t small{display:block;font-size:12.5px;color:var(--dim)}
+#demo-facility .fac-mt-b{padding:0 12px 14px}
+#demo-facility .fac-track{display:flex;gap:4px;list-style:none;margin:0;padding:0}
+#demo-facility .fac-track li{flex:1;min-width:0;font-size:11.5px;color:var(--dim);padding-top:7px;border-top:3px solid var(--line-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#demo-facility .fac-track li.done{border-color:var(--teal-2);color:var(--ink-2)}
+#demo-facility .fac-track li.cur{border-color:var(--coral);color:var(--ink);font-weight:600}
+#demo-facility .fac-resolved{display:flex;gap:10px;margin-top:12px;padding:12px;border-radius:12px;background:var(--ok-soft);font-size:14px}
+#demo-facility .fac-resolved > svg{width:20px;height:20px;flex:none;color:var(--ok)}
+#demo-facility .fac-resolved .btn-row{margin-top:8px}
+#demo-facility .fac-cmt{display:grid;gap:6px;margin-top:12px;font-size:13.5px;font-weight:500}
+#demo-facility .fac-cmt label{font-size:13.5px}
+#demo-facility .fac-cmt .btn{justify-self:start}
+
+/* activity log */
+#demo-facility .fac-log{list-style:none;margin:0;padding:0;display:grid;gap:0;font-size:13.5px}
+#demo-facility .fac-log li{display:grid;grid-template-columns:14px minmax(0,1fr);gap:8px;padding:6px 0;position:relative}
+#demo-facility .fac-log li::before{content:"";position:absolute;left:4px;top:18px;bottom:-6px;width:2px;background:var(--line)}
+#demo-facility .fac-log li:last-child::before{display:none}
+#demo-facility .fac-log-d{width:10px;height:10px;border-radius:50%;background:var(--line-2);margin-top:5px}
+#demo-facility .fac-log .k-comment .fac-log-d,#demo-facility .fac-log .k-note .fac-log-d{background:var(--teal-2)}
+#demo-facility .fac-log .k-ai .fac-log-d{background:var(--coral)}
+#demo-facility .fac-log small{color:var(--dim);font-size:12px}
+#demo-facility .fac-log p{color:var(--ink-2);overflow-wrap:anywhere}
+
+/* photo thumbnails */
+#demo-facility .fac-thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+#demo-facility .fac-thumb{position:relative;width:96px;height:72px;padding:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;background:var(--bg)}
+#demo-facility .fac-thumbs.sm .fac-thumb{width:76px;height:58px}
+#demo-facility .fac-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+#demo-facility .fac-thumb small{position:absolute;left:4px;bottom:4px;font-size:10.5px;padding:1px 6px;border-radius:6px;background:rgba(14,27,34,.65);color:#fff}
+
+/* technician phone */
+#demo-facility .fac-phone{width:100%;max-width:390px;justify-self:center;border-radius:42px;padding:10px;background:var(--ink);box-shadow:var(--shadow-lg)}
+#demo-facility .fac-ph-bar{display:flex;align-items:center;justify-content:space-between;padding:6px 18px 8px;color:#fff;font:600 12.5px var(--f-body)}
+#demo-facility .fac-ph-notch{width:90px;height:22px;border-radius:12px;background:#000}
+#demo-facility .fac-ph-in{background:var(--bg);border-radius:32px;height:700px;overflow-y:auto;overscroll-behavior:contain;padding:14px 14px 22px}
+#demo-facility .fac-ph-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+#demo-facility .fac-ph-head h3{font-size:22px}
+#demo-facility .fac-ph-head small{font-size:12.5px;color:var(--dim)}
+#demo-facility .fac-ph-sc h3{font-size:18px;margin:8px 0 4px;line-height:1.3}
+#demo-facility .fac-seg,#demo-facility .fac-tabs{display:flex;gap:4px;padding:4px;border-radius:14px;background:rgba(14,27,34,.06);margin-bottom:12px}
+#demo-facility .fac-seg button,#demo-facility .fac-tabs button{flex:1;min-height:44px;border:0;border-radius:11px;background:transparent;font:500 14px var(--f-body);color:var(--ink-2);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:6px 12px;white-space:nowrap}
+#demo-facility .fac-seg button[aria-pressed="true"],#demo-facility .fac-tabs button[aria-pressed="true"]{background:#fff;color:var(--ink);box-shadow:var(--shadow-sm)}
+#demo-facility .fac-jobs{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+#demo-facility .fac-job{display:grid;gap:4px;width:100%;padding:12px 12px 12px 16px;border:1px solid var(--line);border-left:4px solid var(--line-2);border-radius:16px;background:#fff;font:inherit;text-align:left;color:var(--ink);cursor:pointer;box-shadow:var(--shadow-sm)}
+#demo-facility .fac-job.pr-critical{border-left-color:var(--bad)}
+#demo-facility .fac-job.pr-high{border-left-color:var(--warn)}
+#demo-facility .fac-job.pr-medium{border-left-color:var(--cobalt)}
+#demo-facility .fac-job b{font-weight:500;font-size:15px;line-height:1.35}
+#demo-facility .fac-job-top{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+#demo-facility .fac-job-top .fac-id{margin-right:auto}
+#demo-facility .fac-job-m{display:flex;align-items:center;gap:4px;font-size:13px;color:var(--dim)}
+#demo-facility .fac-job-m svg{width:14px;height:14px}
+#demo-facility .fac-back{display:inline-flex;align-items:center;gap:4px;min-height:44px;padding:6px 12px 6px 6px;border:0;border-radius:12px;background:#fff;font:500 14.5px var(--f-body);color:var(--teal);cursor:pointer;box-shadow:var(--shadow-sm)}
+#demo-facility .fac-back svg{width:18px;height:18px}
+#demo-facility .fac-ph-sc .fac-dl{font-size:13.5px}
+#demo-facility .fac-safety{margin-top:12px;padding:10px 12px;border-radius:14px;background:var(--warn-soft);font-size:13.5px}
+#demo-facility .fac-safety h5{margin:0 0 4px;color:var(--warn)}
+#demo-facility .fac-safety h5 svg{color:var(--warn)}
+#demo-facility .fac-safety ul{margin:0;padding-left:18px}
+#demo-facility .fac-manual{display:flex;align-items:center;gap:10px;width:100%;margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:#fff;font:inherit;text-align:left;color:var(--ink);cursor:pointer;min-height:44px}
+#demo-facility .fac-manual > svg{width:22px;height:22px;flex:none;color:var(--teal)}
+#demo-facility .fac-manual b{display:block;font-size:14px}
+#demo-facility .fac-manual small{display:block;font-size:12px;color:var(--dim);overflow-wrap:anywhere}
+#demo-facility .fac-manual:hover{border-color:var(--teal-2)}
+#demo-facility .fac-ph-acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+#demo-facility .fac-ph-acts .btn:only-child{grid-column:1/-1}
+#demo-facility .fac-ph-box{margin-top:12px;padding:12px;border-radius:16px;background:#fff;border:1px solid var(--line)}
+#demo-facility .fac-ph-box h5{margin-top:0}
+#demo-facility .fac-ph-box .btn{margin-top:8px}
+#demo-facility .fac-ph-box .fac-chips button,#demo-facility .fac-ph-box .fac-upl{padding:8px 11px;font-size:13.5px}
+#demo-facility .fac-resolve{border-color:var(--teal-2)}
+#demo-facility .fac-wide{width:100%}
+#demo-facility .fac-h5{margin-top:18px}
+#demo-facility .fac-done-m{display:flex;align-items:center;gap:8px;margin-top:14px;padding:12px;border-radius:14px;background:var(--ok-soft);color:var(--ok);font-size:14px;font-weight:500}
+#demo-facility .fac-done-m svg{width:18px;height:18px}
+
+/* manager */
+#demo-facility .fac-tabs{overflow-x:auto;margin-bottom:16px;scrollbar-width:none}
+#demo-facility .fac-tabs button{flex:1 0 auto}
+#demo-facility .fac-cnt{font:500 11.5px var(--f-mono);font-style:normal;min-width:20px;height:20px;border-radius:10px;display:inline-grid;place-items:center;padding:0 6px;background:var(--coral-soft);color:var(--coral-ink)}
+#demo-facility .fac-kpis{margin-bottom:16px}
+#demo-facility .fac-kpis .kpi{box-shadow:var(--shadow-sm)}
+#demo-facility .fac-livetag{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--dim)}
+#demo-facility .fac-livetag::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px var(--ok-soft)}
+#demo-facility .fac-plan .room{display:flex;flex-direction:column;justify-content:flex-start}
+#demo-facility .fac-plan .room[aria-pressed="true"]{outline:2px solid var(--ink);outline-offset:1px}
+#demo-facility .fac-rn{display:block;line-height:1.2;padding-right:16px;overflow-wrap:normal;word-break:normal}
+#demo-facility .fac-short{display:none}
+#demo-facility .fac-picker{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line-2)}
+#demo-facility .fac-pick .room{overflow-wrap:normal;word-break:normal}
+#demo-facility .fac-rb{position:absolute;top:6px;right:6px;min-width:18px;height:18px;border-radius:9px;display:grid;place-items:center;font:600 11px var(--f-mono);font-style:normal;background:var(--ink);color:#fff;padding:0 4px}
+#demo-facility .fac-roominfo{margin-top:14px;padding:14px;border-radius:var(--r-sm);background:var(--bg)}
+#demo-facility .fac-roominfo h4{margin:0 0 8px;font-size:15px;color:var(--ink);font-weight:600}
+#demo-facility .fac-sensors{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+#demo-facility .fac-sensors span{display:grid;font-size:12.5px;color:var(--dim);background:#fff;border-radius:12px;padding:8px 10px}
+#demo-facility .fac-sensors b{font:600 17px var(--f-body);color:var(--ink);font-variant-numeric:tabular-nums}
+#demo-facility .fac-mini-l{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:6px}
+#demo-facility .fac-rowbtn{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;min-height:44px;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:#fff;font:14px var(--f-body);color:var(--ink);text-align:left;cursor:pointer}
+#demo-facility .fac-rowbtn:hover{border-color:var(--teal-2)}
+#demo-facility .fac-att{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:8px}
+#demo-facility .fac-att li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 10px;align-items:start;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-sm);font-size:14px}
+#demo-facility .fac-att li > .btn{grid-column:2;justify-self:start;margin-top:4px}
+#demo-facility .fac-att b{display:block;font-weight:500;line-height:1.35}
+#demo-facility .fac-att small{display:block;color:var(--dim);font-size:12.5px}
+#demo-facility .fac-dot{width:10px;height:10px;border-radius:50%;margin-top:6px}
+#demo-facility .fac-dot.bad{background:var(--bad)}
+#demo-facility .fac-dot.warn{background:var(--warn)}
+#demo-facility .fac-qa{white-space:normal;text-align:left;line-height:1.2}
+#demo-facility .fac-filters{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin:6px 0 12px}
+#demo-facility .fac-filters .sda-search{flex:1 1 220px;min-height:44px}
+#demo-facility .fac-filters .sda-search input{width:100%;padding:0;min-height:42px;box-shadow:none}
+#demo-facility .fac-f{display:grid;gap:4px;font-size:12.5px;color:var(--dim);font-weight:500}
+#demo-facility .fac-f select{width:auto;min-width:130px}
+#demo-facility .fac-chk{display:flex;align-items:center;gap:8px;min-height:44px;font-size:13.5px;font-weight:500;cursor:pointer}
+#demo-facility .fac-chk input{width:18px;height:18px;min-height:0;padding:0;accent-color:var(--teal)}
+#demo-facility .fac-count{font-size:12.5px;color:var(--dim);margin-bottom:6px}
+#demo-facility .fac-tl{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+#demo-facility .fac-tr{display:grid;grid-template-columns:minmax(0,1fr) 160px auto;gap:6px 14px;align-items:center;padding:6px 12px 6px 6px;border:1px solid var(--line);border-radius:var(--r-sm);background:#fff}
+#demo-facility .fac-tr:hover{border-color:var(--teal-2)}
+#demo-facility .fac-tr-main{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start;padding:8px;border:0;border-radius:10px;background:none;font:inherit;text-align:left;color:var(--ink);cursor:pointer;min-height:44px}
+#demo-facility .fac-tr-main .fac-id{padding-top:3px}
+#demo-facility .fac-tr-t b{display:block;font-weight:500;font-size:14.5px;line-height:1.35}
+#demo-facility .fac-tr-t small{display:block;font-size:12.5px;color:var(--dim)}
+#demo-facility .fac-tr-who{font-size:13.5px;line-height:1.3}
+#demo-facility .fac-tr-who small{display:block;color:var(--dim);font-size:12px}
+#demo-facility .fac-tr-p{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+#demo-facility .fac-tr-a{grid-column:1/-1;padding:0 0 6px 8px}
+#demo-facility .fac-assets,#demo-facility .fac-certs,#demo-facility .fac-contracts{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:10px}
+#demo-facility .fac-assets li,#demo-facility .fac-certs li,#demo-facility .fac-contracts li{padding:12px 14px;border:1px solid var(--line);border-radius:var(--r-sm);font-size:14px}
+#demo-facility .fac-assets p,#demo-facility .fac-contracts p{color:var(--ink-2);margin-top:4px;font-size:13.5px}
+#demo-facility .fac-assets small,#demo-facility .fac-certs small{display:block;color:var(--dim);font-size:12.5px;margin-top:2px}
+#demo-facility .fac-assets .btn-row,#demo-facility .fac-certs .btn-row,#demo-facility .fac-contracts .btn-row{margin-top:10px}
+#demo-facility .fac-as-h{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:12px;align-items:center}
+#demo-facility .fac-as-h > b,#demo-facility .fac-c-h b{font-weight:600}
+#demo-facility .fac-as-h .meter{font:500 12.5px var(--f-mono)}
+#demo-facility .fac-certs li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 10px;align-items:center}
+#demo-facility .fac-certs li > .btn-row,#demo-facility .fac-certs li > p{grid-column:1/-1;margin-top:4px}
+#demo-facility .fac-c-h{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+#demo-facility .fac-bars{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:10px}
+#demo-facility .fac-bars li{display:grid;grid-template-columns:120px minmax(0,1fr) auto;gap:10px;align-items:center;font-size:13.5px}
+#demo-facility .fac-bars i{height:10px;border-radius:5px;background:var(--bg);overflow:hidden}
+#demo-facility .fac-bars i b{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--teal-2),var(--teal))}
+#demo-facility .fac-bars em{font-style:normal;font-variant-numeric:tabular-nums;font-weight:500}
+#demo-facility .fac-costs{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+#demo-facility .fac-costs li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:start;padding:8px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+#demo-facility .fac-costs li:last-child{border:0}
+#demo-facility .fac-costs small{display:block;color:var(--dim);font-size:12px}
+#demo-facility .fac-costs b{font-weight:600;font-variant-numeric:tabular-nums}
+
+/* ticket drawer (dialog inside the shell) */
+#demo-facility .fac-dr-t{font-size:16px;color:var(--ink);margin-top:8px}
+#demo-facility .fac-form{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+#demo-facility .fac-form label{font-size:13px;gap:4px}
+#demo-facility .fac-form label:first-child{grid-column:1/-1}
+
+/* responsive */
+@media (max-width:1100px){
+  #demo-facility .fac-tech{grid-template-columns:minmax(0,390px) minmax(0,1fr)}
+}
+@media (max-width:980px){
+  #demo-facility .fac-emp,#demo-facility .fac-ov,#demo-facility .fac-tech{grid-template-columns:minmax(0,1fr)}
+  #demo-facility .fac-tr{grid-template-columns:minmax(0,1fr) auto}
+  #demo-facility .fac-tr-who{grid-column:1;padding-left:8px}
+  #demo-facility .fac-tr-p{grid-column:2;grid-row:1/3;align-self:start;padding-top:8px}
+}
+@media (max-width:560px){
+  #demo-facility .fac-long{display:none}
+  #demo-facility .fac-short{display:inline}
+  #demo-facility .fac-tabs{flex-wrap:wrap}
+  #demo-facility .fac-tabs button{flex:1 1 auto;padding:6px 10px}
+  #demo-facility .fac-tr{grid-template-columns:minmax(0,1fr);padding:6px}
+  #demo-facility .fac-tr-who,#demo-facility .fac-tr-p{grid-column:1;grid-row:auto;padding:0 8px}
+  #demo-facility .fac-tr-p{flex-direction:row;flex-wrap:wrap;justify-content:flex-start;padding-bottom:6px}
+  #demo-facility .fac-tr-a{padding:0 8px 6px}
+  #demo-facility .fac-mt-h{grid-template-columns:minmax(0,1fr) auto}
+  #demo-facility .fac-mt-t{grid-column:1/-1;grid-row:2}
+  #demo-facility .fac-main{padding:12px}
+  #demo-facility .fac-card{padding:14px}
+  #demo-facility .fac-phone{padding:0;background:none;box-shadow:none;border-radius:0;max-width:none}
+  #demo-facility .fac-ph-bar{display:none}
+  #demo-facility .fac-ph-in{height:auto;max-height:none;border-radius:var(--r-md);border:1px solid var(--line)}
+  #demo-facility .fac-form{grid-template-columns:1fr}
+  #demo-facility .fac-sensors b{font-size:15px}
+  #demo-facility .fac-as-h{grid-template-columns:1fr}
+  #demo-facility .fac-bars li{grid-template-columns:96px minmax(0,1fr);}
+  #demo-facility .fac-bars em{grid-column:2}
+  #demo-facility .fac-f{flex:1 1 40%}
+  #demo-facility .fac-f select{min-width:0;width:100%}
+  #demo-facility .fac-plan .room{padding:6px}
+  #demo-facility .fac-rn{padding-right:12px;font-size:11.5px}
+  #demo-facility .fac-pick{grid-template-rows:repeat(4,48px)}
+  #demo-facility .fac-pick .room{font-size:11px;padding:4px}
+  #demo-facility .fac-ph-acts{grid-template-columns:1fr}
+}
