@@ -232,6 +232,14 @@ USE_CASES = [
     how=[("Find a car", "Describe what you need or use the filters. Every car shows a price rating."), ("Compare and finance", "Compare up to three cars and adjust the down payment and term."), ("Book or reserve", "Book a test drive, value your trade-in or reserve a car for 48 hours.")],
     services=["web-applications", "ai-agents", "data-management"]),
 ]
+UC_ICONS = {
+  "vendor-management": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-5 9 5-9 5-9-5z"/><path d="M3 9v6l9 5 9-5V9M12 14v6"/></svg>',
+  "field-service": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>',
+  "facility-management": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V5l8-3v19M12 9h8v12M7.5 8h1M7.5 12h1M7.5 16h1M15.5 13h1M15.5 17h1M2 21h20"/></svg>',
+  "hr-tool": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c.6-3.4 3-5.4 6-5.4s5.4 2 6 5.4"/><circle cx="17.5" cy="9.5" r="2.4"/><path d="M16.5 14.6c2.3.3 4 1.9 4.5 4.6"/></svg>',
+  "furniture-shop": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11V8a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v3"/><path d="M3 13a2 2 0 0 1 4 0v2h10v-2a2 2 0 0 1 4 0v4H3v-4zM6 17v2M18 17v2"/></svg>',
+  "car-marketplace": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16v-3.5L6 7.5A2 2 0 0 1 7.9 6h8.2A2 2 0 0 1 18 7.5l2 5V16"/><path d="M3 16h18v2.5H3zM7.5 18.5V20M16.5 18.5V20M4 12.5h16"/></svg>',
+}
 SVC = {s["slug"]: s for s in SERVICES}
 UC = {u["slug"]: u for u in USE_CASES}
 # --------------------------------------------------------------------------
@@ -290,8 +298,10 @@ def head(r, path, title, meta, schema=None):
 BURGER = '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 6.5h14M3 13.5h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>'
 
 def nav(r, active):
-    drop = "".join(f'<li><a href="{r}services/{s["slug"]}.html"><b>{e(s["name"])}</b><span>{e(", ".join(s["chips"]))}</span></a></li>' for s in SERVICES)
-    ucs = "".join(f'<li><a href="{r}use-cases/{u["slug"]}.html"><b>{e(u["name"])} demo</b><span>{e(u["card"])}</span></a></li>' for u in USE_CASES)
+    drop = "".join(f'<li><a href="{r}services/{s["slug"]}.html"><span class="d-ic" aria-hidden="true">{ICONS[s["icon"]]}</span><span class="d-tx"><b>{e(s["name"])}</b><span>{e(", ".join(s["chips"]))}</span></span></a></li>' for s in SERVICES)
+    drop += f'<li class="d-feature"><a href="{r}services/index.html"><span class="d-kick">All services</span><b>From first prototype to production</b><span>See how we design, build and run AI software for your team.</span><span class="d-go">Explore services <span class="arr">→</span></span></a></li>'
+    ucs = "".join(f'<li><a href="{r}use-cases/{u["slug"]}.html"><span class="d-ic" aria-hidden="true">{UC_ICONS[u["slug"]]}</span><span class="d-tx"><b>{e(u["name"])}</b><span>{e(u["label"])} demo</span></span></a></li>' for u in USE_CASES)
+    ucs += f'<li class="d-feature d-feature-alt"><a href="{r}use-cases/index.html"><span class="d-kick"><i class="pulse-dot"></i>Live in your browser</span><b>Six working demos</b><span>Click through real software on example data, no sign-up needed.</span><span class="d-go">Try the demos <span class="arr">→</span></span></a></li>' 
     cur = lambda k: ' aria-current="page"' if active == k else ""
     return f"""<div class="aurora" aria-hidden="true"><i class="a1"></i><i class="a2"></i><i class="a3"></i></div><div class="grain" aria-hidden="true"></div>
 <a class="skip" href="#main">Skip to content</a>
@@ -299,14 +309,15 @@ def nav(r, active):
   <div class="nav-in glass-strong">
     {logo(r)}
     <ul class="menu">
-      <li class="has-drop"><a href="{r}services/index.html"{cur("services")}>Services</a><ul class="drop glass-strong">{drop}</ul></li>
-      <li class="has-drop"><a href="{r}use-cases/index.html"{cur("use-cases")}>Use cases</a><ul class="drop glass-strong">{ucs}</ul></li>
+      <li class="m-ind" aria-hidden="true"></li>
+      <li class="has-drop"><a href="{r}services/index.html"{cur("services")}>Services <svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a><ul class="drop mega glass-strong">{drop}</ul></li>
+      <li class="has-drop"><a href="{r}use-cases/index.html"{cur("use-cases")}>Use cases <span class="live-badge"><i class="pulse-dot"></i>6 live</span> <svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a><ul class="drop mega glass-strong">{ucs}</ul></li>
       <li><a href="{r}index.html#process">Process</a></li>
       <li><a href="{r}contact.html"{cur("contact")}>Contact</a></li>
       <li class="m-cta"><a class="btn btn-primary" href="{r}contact.html">Start a project <span class="arr">→</span></a></li>
     </ul>
     <div class="nav-cta">
-      <a class="btn btn-primary btn-sm" href="{r}contact.html">Start a project <span class="arr">→</span></a>
+      <a class="btn btn-primary btn-sm btn-shine" href="{r}contact.html">Start a project <span class="arr">→</span></a>
       <button class="burger" type="button" aria-label="Open menu" aria-expanded="false">{BURGER}</button>
     </div>
   </div>
@@ -405,7 +416,7 @@ MINI = {
 }
 
 def uc_switch(r):
-    tabs = "".join(f'<button type="button" role="tab" id="uct-{u["slug"]}" aria-controls="ucp-{u["slug"]}" aria-selected="{"true" if i == 0 else "false"}"{"" if i == 0 else " tabindex=\"-1\""}>{e(u["name"])}</button>' for i, u in enumerate(USE_CASES))
+    tabs = "".join(f'<button type="button" role="tab" id="uct-{u["slug"]}" aria-controls="ucp-{u["slug"]}" aria-selected="{"true" if i == 0 else "false"}"{"" if i == 0 else " tabindex=\"-1\""}><span class="uct-ic" aria-hidden="true">{UC_ICONS[u["slug"]]}</span><span class="uct-tx"><b>{e(u["name"])}</b><small>{e(u["label"])}</small></span></button>' for i, u in enumerate(USE_CASES))
     panels = ""
     for i, u in enumerate(USE_CASES):
         panels += f"""<div class="uc-panel" role="tabpanel" id="ucp-{u['slug']}" aria-labelledby="uct-{u['slug']}"{"" if i == 0 else " hidden"}>
@@ -870,7 +881,14 @@ def main():
         "background_color": "#F7F9F9", "theme_color": "#0D7270", "icons": [
             {"src": "/assets/brand/icon-192.png", "sizes": "192x192", "type": "image/png"},
             {"src": "/assets/brand/icon-512.png", "sizes": "512x512", "type": "image/png"}]}, indent=2))
-    print(f"Built {len(pages)} pages into {OUT}")
+    # Cloudflare Pages serves the repository root, so mirror the finished site there as well.
+    for item in OUT.iterdir():
+        target = ROOT / item.name
+        if item.is_dir():
+            shutil.copytree(item, target, dirs_exist_ok=True)
+        else:
+            shutil.copy(item, target)
+    print(f"Built {len(pages)} pages into {OUT} and mirrored them to the repository root")
 
 if __name__ == "__main__":
     main()
