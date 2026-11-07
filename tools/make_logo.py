@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """Generates the SDA AI Services logo set as SVG (text converted to outlines).
 
-Needs: pip install fonttools brotli ; the Geist variable font at tools/geist.woff2
-Output: src/assets/brand/*.svg   (PNG exports are rendered by tools/render_png.js)
+Mark: dark rounded square with an orange prompt chevron and a light cursor bar.
+Wordmark: "SDA" (Unbounded ExtraBold) over "AI SERVICES" (Sora Bold, tracked to the same width).
+
+Needs: pip install fonttools brotli ; fonts in tools/fonts/
+Output: src/assets/brand/*.svg   (PNG exports: python3 tools/render_png.py)
 """
 from pathlib import Path
 from fontTools.ttLib import TTFont
-from fontTools.varLib.instancer import instantiateVariableFont
 from fontTools.pens.svgPathPen import SVGPathPen
 from fontTools.pens.transformPen import TransformPen
 from fontTools.pens.boundsPen import BoundsPen
@@ -14,78 +16,88 @@ from fontTools.pens.boundsPen import BoundsPen
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "src" / "assets" / "brand"
 OUT.mkdir(parents=True, exist_ok=True)
-FONT = Path(__file__).with_name("geist.woff2")
+FONTS = Path(__file__).with_name("fonts")
 
-INK, TEAL_TEXT, WHITE = "#17181C", "#C2410C", "#FFFFFF"
-G1, G2 = "#C2410C", "#FDA978"          # orange gradient (dark -> light)
-DOT = "#0EA5E9"                         # sky-blue circuit dots
-SPARK = "M12 0c.6 5.8 3.4 9.9 12 12-8.6 2.1-11.4 6.2-12 12-.6-5.8-3.4-9.9-12-12 8.6-2.1 11.4-6.2 12-12z"
+NAVY, ORANGE, LIGHT, WHITE = "#0B1F2A", "#FF6A13", "#F4F4F6", "#FFFFFF"
 
-def font_at(w):
-    f = TTFont(FONT)
-    return instantiateVariableFont(f, {"wght": w}, inplace=False)
 
-def text_path(font, text, size, tracking_em=0.0):
-    """Return (svg path d, width, cap height) for text with baseline at y=0."""
+def mark(x, y, size, bg=NAVY):
+    """Rounded square (32-unit grid) with the prompt chevron and cursor bar."""
+    k = size / 32
+    return (f'<g transform="translate({x:.2f} {y:.2f}) scale({k:.4f})">'
+            f'<rect width="32" height="32" rx="9" fill="{bg}"/>'
+            f'<path d="M8.5 10.5 14 16l-5.5 5.5" fill="none" stroke="{ORANGE}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>'
+            f'<rect x="16" y="19.6" width="8.5" height="3.4" rx="1.7" fill="{LIGHT}"/></g>')
+
+
+def text_path(font, text, size, tracking=0.0):
+    """(svg path d, advance width, ink bounds) for text with baseline at y=0; tracking in px."""
     gs, cmap, hmtx = font.getGlyphSet(), font.getBestCmap(), font["hmtx"]
-    upm = font["head"].unitsPerEm
-    s = size / upm
-    x, ds = 0.0, []
+    s = size / font["head"].unitsPerEm
+    x, ds, bp = 0.0, [], BoundsPen(gs)
     for i, ch in enumerate(text):
         g = cmap[ord(ch)]
         pen = SVGPathPen(gs)
         gs[g].draw(TransformPen(pen, (s, 0, 0, -s, x, 0)))
+        gs[g].draw(TransformPen(bp, (s, 0, 0, -s, x, 0)))
         ds.append(pen.getCommands())
-        x += hmtx[g][0] * s + (tracking_em * size if i < len(text) - 1 else 0)
-    bp = BoundsPen(gs); gs[cmap[ord("H")]].draw(bp)
-    cap = bp.bounds[3] * s
-    return " ".join(ds), x, cap
+        x += hmtx[g][0] * s + (tracking if i < len(text) - 1 else 0)
+    return " ".join(ds), x, bp.bounds  # bounds: xmin, ymin, xmax, ymax (y down)
 
-def mark(x, y, size, gid):
-    """Gradient circle with a white cloud and three circuit lines (same drawing as the site header)."""
-    k = size / 56
-    return (f'<defs><linearGradient id="{gid}" x1="0" y1="1" x2="1" y2="0">'
-            f'<stop offset="0" stop-color="{G1}"/><stop offset="1" stop-color="{G2}"/></linearGradient></defs>'
-            f'<g transform="translate({x:.2f} {y:.2f}) scale({k:.4f})">'
-            f'<circle cx="28" cy="28" r="27" fill="url(#{gid})"/>'
-            '<path d="M17.5 34.5a6.6 6.6 0 0 1 .9-13.1 9.6 9.6 0 0 1 18.4-3 7.6 7.6 0 0 1 3.3 16.1z" fill="#fff" fill-opacity=".95"/>'
-            '<g fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"><path d="M23 34.5v3.6h-4"/><path d="M28 34.5v6.4"/><path d="M33 34.5v3.6h4"/></g>'
-            '<circle cx="17" cy="38.1" r="1.9" fill="none" stroke="#fff" stroke-width="1.5"/>'
-            f'<circle cx="28" cy="42.8" r="2.3" fill="{DOT}" stroke="#fff" stroke-width="1.4"/>'
-            f'<circle cx="39" cy="38.1" r="1.9" fill="{DOT}" stroke="#fff" stroke-width="1.3"/></g>')
 
-def svg(w, h, body, title):
-    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w:.0f} {h:.0f}" width="{w:.0f}" height="{h:.0f}" role="img" aria-label="{title}">'
+def fit_tracking(font, text, size, width):
+    _, w0, b0 = text_path(font, text, size)
+    return (width - (b0[2] - b0[0])) / (len(text) - 1)
+
+
+def wordmark(big, small, size_big):
+    d1, _, b1 = text_path(big, "SDA", size_big, -0.01 * size_big)
+    w = b1[2] - b1[0]
+    size_small = size_big * 0.29
+    t = fit_tracking(small, "AI SERVICES", size_small, w)
+    d2, _, b2 = text_path(small, "AI SERVICES", size_small, t)
+    gap = size_big * 0.2
+    # put the top of SDA at y=0
+    y1 = -b1[1]
+    y2 = y1 + b1[3] + gap - b2[1]
+    h = y2 + b2[3]
+    return d1, (-b1[0], y1), d2, (-b2[0], y2), w, h
+
+
+def svg(w, h, body, title="SDA AI Services"):
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w:.1f} {h:.1f}" width="{w:.0f}" height="{h:.0f}" role="img" aria-label="{title}">'
             f'<title>{title}</title>{body}</svg>\n')
 
-def main():
-    bold, med = font_at(700), font_at(560)
-    # --- horizontal lockup: mark + SDA / AI SERVICES ---
+
+def lockup(c1, c2, mark_bg=NAVY):
+    big = TTFont(FONTS / "unbounded-latin-800-normal.woff2")
+    small = TTFont(FONTS / "sora-latin-700-normal.woff2")
     M = 64
-    d1, w1, cap1 = text_path(bold, "SDA", 40, -0.01)
-    d2, w2, cap2 = text_path(med, "AI SERVICES", 10.5, 0.34)
-    gap = 16
-    tx = M + gap
-    base1 = 34                 # baseline of SDA
-    base2 = base1 + 20         # baseline of tagline
-    W = tx + max(w1, w2) + 4
-    for name, c1, c2 in (("logo", INK, TEAL_TEXT), ("logo-white", WHITE, "#FFD2B5")):
-        body = (mark(0, 0, M, "g") +
-                f'<path d="{d1}" fill="{c1}" transform="translate({tx} {base1})"/>'
-                f'<path d="{d2}" fill="{c2}" transform="translate({tx + 1} {base2})"/>')
-        (OUT / f"{name}.svg").write_text(svg(W, M, body, "SDA AI Services"))
-    # --- stacked lockup (for square spaces, social avatars) ---
-    S = 220
-    m = 96
-    d3, w3, _ = text_path(bold, "SDA", 56, -0.01)
-    d4, w4, _ = text_path(med, "AI SERVICES", 13, 0.34)
-    body = (mark((S - m) / 2, 18, m, "g") +
-            f'<path d="{d3}" fill="{INK}" transform="translate({(S - w3) / 2:.2f} {18 + m + 58})"/>'
-            f'<path d="{d4}" fill="{TEAL_TEXT}" transform="translate({(S - w4) / 2:.2f} {18 + m + 82})"/>')
-    (OUT / "logo-stacked.svg").write_text(svg(S, S, body, "SDA AI Services"))
-    # --- mark only / favicon ---
-    (OUT / "logo-mark.svg").write_text(svg(64, 64, mark(0, 0, 64, "g"), "SDA AI Services"))
+    d1, o1, d2, o2, w, h = wordmark(big, small, 38)
+    tx, ty = M + 16, (M - h) / 2
+    body = (mark(0, 0, M, mark_bg) +
+            f'<path d="{d1}" fill="{c1}" transform="translate({tx + o1[0]:.2f} {ty + o1[1]:.2f})"/>'
+            f'<path d="{d2}" fill="{c2}" transform="translate({tx + o2[0]:.2f} {ty + o2[1]:.2f})"/>')
+    return svg(tx + w + 2, M, body), (big, small)
+
+
+def main():
+    (OUT / "logo.svg").write_text(lockup(NAVY, ORANGE)[0])
+    (OUT / "logo-white.svg").write_text(lockup(WHITE, ORANGE, "#16323F")[0])
+    # stacked lockup for square spaces / social avatars
+    big = TTFont(FONTS / "unbounded-latin-800-normal.woff2")
+    small = TTFont(FONTS / "sora-latin-700-normal.woff2")
+    S, m = 220, 96
+    d1, o1, d2, o2, w, h = wordmark(big, small, 46)
+    top = (S - (m + 22 + h)) / 2
+    tx, ty = (S - w) / 2, top + m + 22
+    body = (mark((S - m) / 2, top, m) +
+            f'<path d="{d1}" fill="{NAVY}" transform="translate({tx + o1[0]:.2f} {ty + o1[1]:.2f})"/>'
+            f'<path d="{d2}" fill="{ORANGE}" transform="translate({tx + o2[0]:.2f} {ty + o2[1]:.2f})"/>')
+    (OUT / "logo-stacked.svg").write_text(svg(S, S, body))
+    (OUT / "logo-mark.svg").write_text(svg(64, 64, mark(0, 0, 64)))
     print("written:", sorted(p.name for p in OUT.glob("*.svg")))
+
 
 if __name__ == "__main__":
     main()

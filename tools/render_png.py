@@ -21,7 +21,7 @@ JOBS = [
       <div style="position:absolute;width:760px;height:760px;left:-220px;top:-320px;border-radius:50%;background:radial-gradient(circle,#FFC9A6,transparent 66%);filter:blur(30px);opacity:.8"></div>
       <div style="position:absolute;width:700px;height:700px;right:-240px;bottom:-330px;border-radius:50%;background:radial-gradient(circle,#A9DEFA,transparent 66%);filter:blur(30px);opacity:.8"></div>
       <div style="position:absolute;left:90px;top:96px"><img src="{svg("logo.svg")}" style="height:96px"></div>
-      <div style="position:absolute;left:90px;top:262px;width:980px;font:600 72px/1.02 'Geist',system-ui;letter-spacing:-0.045em;color:#17181C">AI that works the way<br>your <span style="color:#C2410C">team</span> does.</div>
+      <div style="position:absolute;left:90px;top:262px;width:980px;font:600 72px/1.02 'Geist',system-ui;letter-spacing:-0.045em;color:#0B1F2A">AI that works the way<br>your <span style="color:#EA580C">team</span> does.</div>
       <div style="position:absolute;left:90px;bottom:70px;font:400 28px 'Geist',system-ui;color:#5E6068">AI agents · Automation · Web &amp; mobile apps · Data</div>
     </div>'''),
 ]

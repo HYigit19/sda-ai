@@ -5,7 +5,7 @@ Edit content in this file (SERVICES, USE_CASES, page functions), then run:
     python3 build.py
 Change SITE_URL and EMAIL before going live.
 """
-import json, shutil, html
+import json, shutil, html, re
 from pathlib import Path
 
 SITE_URL = "https://sda-ai.pages.dev"      # Cloudflare Pages address. Change to your own domain once it is connected.
@@ -249,22 +249,12 @@ def SPG():
 SP = '<span class="sp" style="color:var(--teal-2)">' + SPARK + '</span>'
 CHECK = '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.2" fill="currentColor" opacity=".16"/><path d="M4.8 8.3 7 10.4l4.2-4.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>'
 
-_logo_n = [0]
 def logo_svg(cls="logo-svg"):
-    """Cloud logo (from the brand artwork), drawn with the theme colours."""
-    _logo_n[0] += 1
-    g = f"lg{_logo_n[0]}"
-    return (f'<svg class="{cls}" viewBox="0 0 172 56" role="img" aria-label="{BRAND}"><defs><linearGradient id="{g}" x1="0" y1="1" x2="1" y2="0">'
-            f'<stop offset="0" style="stop-color:var(--teal)"/><stop offset="1" style="stop-color:var(--teal-glow)"/></linearGradient></defs>'
-            f'<circle cx="28" cy="28" r="27" fill="url(#{g})"/>'
-            '<path d="M17.5 34.5a6.6 6.6 0 0 1 .9-13.1 9.6 9.6 0 0 1 18.4-3 7.6 7.6 0 0 1 3.3 16.1z" fill="#fff" fill-opacity=".95"/>'
-            '<path d="M26.5 20.2a7.4 7.4 0 0 1 9.6 6.6 7 7 0 0 0-6.6 7.7h-4.4a8.7 8.7 0 0 1 1.4-14.3z" fill="#fff" fill-opacity=".55" style="mix-blend-mode:multiply"/>'
-            '<g fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"><path d="M23 34.5v3.6h-4"/><path d="M28 34.5v6.4"/><path d="M33 34.5v3.6h4"/></g>'
-            '<circle cx="17" cy="38.1" r="1.9" fill="none" stroke="#fff" stroke-width="1.5"/>'
-            '<circle cx="28" cy="42.8" r="2.3" style="fill:var(--coral)" stroke="#fff" stroke-width="1.4"/>'
-            '<circle cx="39" cy="38.1" r="1.9" style="fill:var(--coral)" stroke="#fff" stroke-width="1.3"/>'
-            '<text x="64" y="31" font-family="Geist, system-ui, sans-serif" font-size="28" font-weight="800" letter-spacing="-.5" style="fill:var(--ink)">SDA</text>'
-            '<text x="65" y="46.5" font-family="Geist, system-ui, sans-serif" font-size="9.4" font-weight="600" letter-spacing="2.9" style="fill:var(--teal)">AI SERVICES</text></svg>')
+    """Brand logo (prompt mark + SDA / AI SERVICES), inlined from src/assets/brand/logo.svg."""
+    s = (ROOT / "src" / "assets" / "brand" / "logo.svg").read_text().strip()
+    s = re.sub(r'<title>.*?</title>', '', s)
+    s = re.sub(r'^<svg [^>]*?(viewBox="[^"]+")[^>]*>', lambda m: f'<svg class="{cls}" {m.group(1)} role="img" aria-label="{BRAND}">', s)
+    return s
 
 def logo(r):
     return f'<a class="logo" href="{r}index.html" aria-label="{BRAND} home">{logo_svg()}</a>'
