@@ -151,3 +151,19 @@
   if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   document.querySelectorAll('.video-wide video').forEach(function(v){ v.removeAttribute('autoplay'); try{ v.pause(); }catch(e){} });
 })();
+
+/* Colour preview: ?themes shows a picker with the five palettes (choice is remembered). */
+(function(){
+  var THEMES = [['lagoon','Lagoon','#0B7A72','#FF7A59'],['ocean','Ocean','#1D4ED8','#06B6D4'],['indigo','Indigo','#4F46E5','#FB8A4C'],['forest','Forest','#166534','#D49B12'],['ember','Ember','#C2410C','#0EA5E9']];
+  var q = new URLSearchParams(location.search), store = {get:function(k){try{return localStorage.getItem(k)}catch(e){return null}}, set:function(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+  if(q.has('themes')) store.set('sda-theme-picker','1');
+  if(q.get('theme')) store.set('sda-theme', q.get('theme'));
+  if(store.get('sda-theme-picker') !== '1') return;
+  var cur = document.documentElement.dataset.theme || 'lagoon';
+  document.documentElement.dataset.theme = cur;
+  var el = document.createElement('div'); el.className = 'theme-pick'; el.setAttribute('role','group'); el.setAttribute('aria-label','Colour theme');
+  el.innerHTML = '<b>Colour theme</b><div>' + THEMES.map(function(t, i){ return '<button type="button" data-t="'+t[0]+'"><i style="background:linear-gradient(135deg,'+t[2]+' 50%,'+t[3]+' 50%)"></i>'+(i+1)+' · '+t[1]+'</button>'; }).join('') + '</div>';
+  var paint = function(){ el.querySelectorAll('[data-t]').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.t === cur); }); };
+  el.addEventListener('click', function(e){ var b = e.target.closest('[data-t]'); if(!b) return; cur = b.dataset.t; document.documentElement.dataset.theme = cur; store.set('sda-theme', cur); paint(); });
+  document.body.appendChild(el); paint();
+})();
