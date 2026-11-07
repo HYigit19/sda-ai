@@ -5,8 +5,8 @@
   color-scheme: light;
   --bg:#F8F7F5;
   --white:#FFFFFF;
-  --ink:#17181C;          /* text */
-  --ink-2:#2C2E34;
+  --ink:#0B1F2A;          /* text (logo navy) */
+  --ink-2:#22343F;
   --dim:#5E6068;          /* secondary text */
   --teal:#C2410C;         /* primary (orange), text-safe on white */
   --teal-2:#EA580C;
@@ -405,7 +405,7 @@ footer{padding-block:64px 36px}
 .demo-top .dots{display:flex;gap:6px}
 .demo-top .dots i{width:10px;height:10px;border-radius:50%;background:#D5DEDF;display:block}
 .demo-top .app{font-weight:600;font-size:14.5px;display:flex;align-items:center;gap:8px}
-.demo-top .app::before{content:"";width:18px;height:18px;border-radius:6px;background:linear-gradient(135deg,var(--teal-2),var(--coral));display:block}
+.demo-top .app::before{content:"";width:22px;height:22px;flex:none;background:url(brand/logo-mark.svg) center/contain no-repeat;display:block}
 .demo-top .badge{margin-left:auto;font-size:12.5px;font-weight:500;color:var(--teal);background:var(--teal-soft);padding:5px 11px;border-radius:999px}
 .demo-body{padding:22px}
 .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
