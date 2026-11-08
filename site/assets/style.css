@@ -784,3 +784,24 @@ footer .logo-svg{height:46px}
 @media (max-width:980px){.steps.s4{grid-template-columns:1fr 1fr}}
 @media (max-width:560px){.steps.s4{grid-template-columns:1fr}}
 .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* Pricing hover: the card under the pointer turns navy, the featured card steps back */
+.price-card,.plan,.price-extras div{transition:transform .3s var(--ease-out),box-shadow .3s var(--ease-out),background-color .25s ease,color .25s ease}
+.price-card h3,.price-card .unit,.price-card .price small,.price-card .price,.price-card .d-ic,.price-card li svg,.price-card .link{transition:color .25s ease,background-color .25s ease,border-color .25s ease}
+@media (hover:hover){
+  .price-grid:hover .price-card.hl:not(:hover){background:var(--glass);color:var(--ink);border-color:rgba(255,255,255,.7)}
+  .price-grid:hover .price-card.hl:not(:hover) h3{color:var(--ink)}
+  .price-grid:hover .price-card.hl:not(:hover) .unit,.price-grid:hover .price-card.hl:not(:hover) .price small{color:var(--dim)}
+  .price-grid:hover .price-card.hl:not(:hover) .price{border-top-color:var(--line)}
+  .price-grid:hover .price-card.hl:not(:hover) .d-ic{background:var(--teal-soft);color:var(--teal)}
+  .price-grid:hover .price-card.hl:not(:hover) li svg,.price-grid:hover .price-card.hl:not(:hover) .link{color:var(--teal)}
+  .price-card:hover{background:var(--ink);color:#fff;border-color:var(--ink);transform:translateY(-4px);box-shadow:0 0 0 1px var(--ink),var(--shadow-lg)}
+  .price-card:hover h3{color:#fff}
+  .price-card:hover .unit,.price-card:hover .price small{color:var(--on-dark-dim)}
+  .price-card:hover .price{border-top-color:rgba(255,255,255,.14)}
+  .price-card:hover .d-ic{background:rgba(255,255,255,.1);color:var(--teal-glow)}
+  .price-card:hover li svg,.price-card:hover .link{color:var(--teal-glow)}
+  .plan:hover{transform:translateY(-4px);box-shadow:0 0 0 2px var(--teal-2),var(--shadow-lg)}
+  .price-extras div:hover{transform:translateY(-2px);box-shadow:inset 0 1px 0 #fff,var(--shadow-lg)}
+}
+@media (prefers-reduced-motion:reduce){.price-card:hover,.plan:hover,.price-extras div:hover{transform:none}}
