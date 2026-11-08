@@ -728,3 +728,59 @@ footer .logo-svg{height:46px}
 .st{font-style:normal;font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px;background:var(--bg);color:var(--dim)}
 .st.ok{background:var(--teal-soft);color:var(--teal)}
 .st.act{background:var(--coral-soft);color:var(--coral-ink)}
+
+/* Pricing */
+.facts dd.hl{color:var(--teal);font-weight:600}
+.promise{display:grid;grid-template-columns:1.25fr 1fr;gap:16px}
+.promise-card{border-radius:var(--r-lg);padding:32px;display:grid;gap:24px;align-content:start;position:relative;overflow:hidden;isolation:isolate}
+.promise-card::before{content:"";position:absolute;z-index:-1;inset:0;background:radial-gradient(60% 90% at 0% 0%,color-mix(in srgb,var(--teal-glow) 30%,transparent),transparent 70%)}
+.promise-card.alt::before{background:radial-gradient(60% 90% at 100% 0%,color-mix(in srgb,var(--coral-glow) 30%,transparent),transparent 70%)}
+.promise-top{display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:center}
+.promise-big{font:600 clamp(44px,5.5vw,72px)/1 var(--f-display);letter-spacing:-.05em;color:var(--teal);white-space:nowrap}
+.promise-big.inf{color:var(--coral-ink);font-size:clamp(56px,7vw,92px)}
+.promise h2{font-size:clamp(26px,3vw,36px)}
+.promise-top p{color:var(--dim);margin-top:8px;font-size:16px}
+.promise-rules{list-style:none;margin:0;padding:20px 0 0;border-top:1px solid var(--line);display:grid;grid-template-columns:1fr 1fr;gap:10px 22px}
+.promise-rules li,.price-card li,.plan li{display:grid;grid-template-columns:18px 1fr;gap:10px;font-size:15px;line-height:1.45}
+.promise-rules svg,.price-card li svg,.plan li svg{width:18px;height:18px;color:var(--teal);margin-top:1px}
+@media (max-width:900px){.promise{grid-template-columns:1fr}}
+@media (max-width:620px){.promise-top{grid-template-columns:1fr;gap:12px}.promise-rules{grid-template-columns:1fr}.promise-card{padding:24px}}
+.price-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.price-card{border-radius:var(--r-lg);padding:28px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.price-card .d-ic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:var(--teal-soft);color:var(--teal)}
+.price-card .d-ic svg{width:22px;height:22px}
+.price-card h3{font-size:21px}
+.price{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--line)}
+.price small{font-size:14px;color:var(--dim);font-weight:500}
+.price b{font:600 clamp(30px,3vw,38px)/1 var(--f-display);letter-spacing:-.04em;white-space:nowrap}
+.price b.req{font-size:30px;color:var(--ink-2)}
+.unit{color:var(--dim);font-size:14px;margin-top:-4px}
+.price-card ul,.plan ul{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:9px}
+.price-card .link{margin-top:auto;padding-top:14px}
+.price-card.hl{background:var(--ink);color:#fff;border-color:var(--ink)}
+.price-card.hl h3{color:#fff}
+.price-card.hl .unit,.price-card.hl .price small{color:var(--on-dark-dim)}
+.price-card.hl .price{border-top-color:rgba(255,255,255,.14)}
+.price-card.hl .d-ic{background:rgba(255,255,255,.1);color:var(--teal-glow)}
+.price-card.hl li svg{color:var(--teal-glow)}
+.price-card.hl .link{color:var(--teal-glow)}
+@media (max-width:980px){.price-grid{grid-template-columns:1fr 1fr}}
+@media (max-width:620px){.price-grid{grid-template-columns:1fr}.price-card{padding:22px}}
+.price-extras{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.price-extras div{border-radius:var(--r-md);padding:22px 24px;display:grid;gap:4px}
+.price-extras b{font-size:17px;font-weight:600}
+.price-extras span{color:var(--dim);font-size:15px}
+.price-extras strong{color:var(--teal);font-weight:600}
+@media (max-width:760px){.price-extras{grid-template-columns:1fr}}
+.plan-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.plan{border-radius:var(--r-lg);padding:28px;display:flex;flex-direction:column;gap:10px;min-width:0;position:relative}
+.plan h3{font-size:22px}
+.plan .price{border-top:0;padding-top:6px}
+.plan ul{padding-top:16px;border-top:1px solid var(--line)}
+.plan.star{box-shadow:0 0 0 2px var(--teal-2), var(--shadow-lg)}
+.badge{position:absolute;top:22px;right:22px;font-size:12.5px;font-weight:600;color:#fff;background:var(--teal);border-radius:99px;padding:4px 11px}
+@media (max-width:900px){.plan-grid{grid-template-columns:1fr}}
+.steps.s4{grid-template-columns:repeat(4,1fr)}
+@media (max-width:980px){.steps.s4{grid-template-columns:1fr 1fr}}
+@media (max-width:560px){.steps.s4{grid-template-columns:1fr}}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}

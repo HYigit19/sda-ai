@@ -307,6 +307,7 @@ def nav(r, active):
       <li><a href="{r}index.html"{cur("home")}>Home</a></li>
       <li class="has-drop"><a href="{r}services/index.html"{cur("services")}>Services <svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a><ul class="drop mega glass-strong">{drop}</ul></li>
       <li><a href="{r}use-cases/index.html"{cur("use-cases")}><i class="pulse-dot" aria-hidden="true"></i>Live demos</a></li>
+      <li><a href="{r}pricing.html"{cur("pricing")}>Pricing</a></li>
       <li><a href="{r}index.html#process">Process</a></li>
       <li><a href="{r}contact.html"{cur("contact")}>Contact</a></li>
       <li class="m-cta"><a class="btn btn-primary" href="{r}contact.html">Start a project <span class="arr">→</span></a></li>
@@ -328,7 +329,7 @@ def footer(r, demo=False):
       <div>{logo(r)}<p>AI software, web and app development for companies that want working systems in production.</p></div>
       <div><h4>Services</h4><ul>{svc}</ul></div>
       <div><h4>Industries</h4><ul>{inds}</ul></div>
-      <div><h4>Company</h4><ul><li><a href="{r}index.html#process">Process</a></li><li><a href="{r}index.html#stack">Technology</a></li><li><a href="{r}contact.html">Contact</a></li><li>{EMAIL}</li></ul></div>
+      <div><h4>Company</h4><ul><li><a href="{r}pricing.html">Pricing</a></li><li><a href="{r}index.html#process">Process</a></li><li><a href="{r}index.html#stack">Technology</a></li><li><a href="{r}contact.html">Contact</a></li><li>{EMAIL}</li></ul></div>
     </div>
     <div class="foot-base"><span>© <span id="yr">2026</span> {BRAND}</span><span><a href="{r}privacy.html">Privacy policy</a> · <a href="{r}legal-notice.html">Legal notice</a></span></div>
   </div>
@@ -630,6 +631,104 @@ def uc_page(u):
            "operatingSystem": "Web", "description": u["meta"], "url": f"{SITE_URL}/{path}", "creator": {"@type": "Organization", "name": BRAND}}]
     return page(r, path, u["title"], u["meta"], "use-cases", body, ld, demo=True)
 
+# --------------------------------------------------------------------------
+# Pricing (UAE market prices, AED, excl. 5 % VAT)
+# --------------------------------------------------------------------------
+PRICES = [
+  ("ai-agents", "13,900", "per agent, fixed price", ["Chat, WhatsApp or voice", "Answers from your documents", "Actions in your systems", "Guardrails and human approval"]),
+  ("workflow-automation", "11,900", "per process, fixed price", ["Emails, documents, approvals", "Connected to ERP, CRM or email", "Exception queue for your team", "Dashboard of time saved"]),
+  ("data-management", "10,900", "per dashboard or data project", ["KPI dashboards, live data", "Data from ERP, Excel and tools", "Clean master data", "Alerts and reports"]),
+  ("web-applications", "11,900", "one-time, fixed price", ["Portals and internal tools", "Roles and permissions", "Built only for your company", "Integrations to your systems"]),
+  ("mobile-apps", "11,900", "one-time, fixed price", ["iOS and Android", "Photos, GPS and signatures", "Works offline in the field", "Synced to your back office"]),
+  ("sap-integration", None, "priced after the free discovery call", ["SAP and other ERP systems", "APIs and data pipelines", "Single sign-on", "Secure, monitored interfaces"]),
+]
+PLANS = [
+  ("Essential", "For apps and automations", "1,100", None, ["Hosting and monitoring", "Security updates", "Bug fixing", "Response next business day"], False),
+  ("Business", "For software your team uses daily", "2,200", "Recommended", ["Everything in Essential", "4 hours of changes per month", "Response within 8 hours", "Monthly status report"], True),
+  ("Premium", "For business-critical systems", "4,400", None, ["Everything in Business", "8 hours of changes per month", "Response within 4 hours", "Priority handling"], False),
+]
+PRICE_FAQ = [
+  ("What does the pilot project cost?", "Nothing. We build a pilot for one use case, free of charge and with no obligation. You test it with your own examples. Only if you say yes do we agree on a fixed price for the full solution."),
+  ("What does unlimited revisions mean?", "We revise designs, screens and features within the agreed scope until you approve them. Revision rounds are never billed extra."),
+  ("Why do you show starting prices?", "Every solution is built for your company. The final price depends on scope, such as integrations, user roles and languages. After the pilot you get a binding fixed price."),
+  ("Do you charge per user?", "No. Project prices are one-time and operations plans are per company. Your whole team can use the software at no extra cost. Only AI model usage depends on volume and is billed at cost."),
+  ("Are prices including VAT?", "No. All prices are in AED and exclude 5 % UAE VAT."),
+  ("Do you offer Arabic?", "Yes. Interfaces and AI assistants can be built in English and Arabic, including right-to-left layouts."),
+]
+PILOT_RULES = ["One use case: one agent, one workflow or one screen flow", "Up to 5 working days of build effort on our side", "You provide sample data and one contact person", "Runs in our test environment, not your live systems", "No contract and no cost if you say no"]
+
+def pricing():
+    r = ""
+    items = [("Home", "index.html"), ("Pricing", None)]
+    side = f"""<dl class="facts glass-strong"><div><dt>Pilot project</dt><dd class="hl">Free</dd></div><div><dt>Revisions</dt><dd class="hl">Unlimited</dd></div><div><dt>Pricing</dt><dd>Fixed price per project</dd></div><div><dt>Per-user fees</dt><dd>None</dd></div><div><dt>Currency</dt><dd>AED, excl. 5 % VAT</dd></div></dl>"""
+    extra = f'<div class="cta-row"><a class="btn btn-primary" href="{r}contact.html">Request a free pilot <span class="arr">→</span></a><a class="btn btn-glass" href="#prices">See prices</a></div>'
+    hero = page_hero(r, items, "Free pilot. Unlimited revisions.", "No off-the-shelf software: we build solutions for your company. Your pilot project is <b>free of charge</b>, we revise it <b>until you are happy</b>, and you only pay once you say yes.", extra, side)
+    rules = "".join(f"<li>{CHECK}<span>{e(x)}</span></li>" for x in PILOT_RULES)
+    rev = "".join(f"<li>{CHECK}<span>{e(x)}</span></li>" for x in ["Designs and screens", "Features and workflows", "Texts in English and Arabic", "Every round included until you approve"])
+    promise = f"""<section class="block" style="padding-top:20px"><div class="wrap">
+  <div class="promise">
+    <div class="promise-card glass-strong">
+      <div class="promise-top"><span class="promise-big">AED 0</span><div><h2>Free pilot project</h2><p>We build a working pilot for your use case without you paying anything. You test it with real examples. Only if you say yes do we talk about working together.</p></div></div>
+      <ul class="promise-rules">{rules}</ul>
+    </div>
+    <div class="promise-card glass-strong alt">
+      <div class="promise-top"><span class="promise-big inf" aria-hidden="true">∞</span><div><h2>Unlimited revisions</h2><p>We refine designs, screens and features within the agreed scope until you approve them. No revision is ever billed extra.</p></div></div>
+      <ul class="promise-rules">{rev}</ul>
+      <a class="btn btn-primary" href="{r}contact.html" style="justify-self:start">Start your free pilot <span class="arr">→</span></a>
+    </div>
+  </div>
+</div></section>"""
+    cards = ""
+    for slug, price, unit, feats, in [(a, b, c, d) for a, b, c, d in PRICES]:
+        sv = SVC[slug]
+        hl = " hl" if slug == "ai-agents" else ""
+        pr = f'<div class="price"><small>from</small><b>AED {price}</b></div>' if price else '<div class="price"><b class="req">On request</b></div>'
+        f = "".join(f"<li>{CHECK}<span>{e(x)}</span></li>" for x in feats)
+        cards += f"""<article class="price-card glass{hl}"><span class="d-ic" aria-hidden="true">{ICONS[sv['icon']]}</span><h3>{e(sv['name'])}</h3>{pr}<p class="unit">{e(unit)}</p><ul>{f}</ul><a class="link" href="{r}services/{slug}.html">Learn more<span class="vh">: {e(sv['name'])}</span> <span class="arr">→</span></a></article>"""
+    plans = ""
+    for name, forr, price, badge, feats, star in PLANS:
+        f = "".join(f"<li>{CHECK}<span>{e(x)}</span></li>" for x in feats)
+        b = f'<span class="badge">{e(badge)}</span>' if badge else ""
+        plans += f"""<article class="plan glass{' star' if star else ''}">{b}<h3>{e(name)}</h3><p class="unit">{e(forr)}</p><div class="price"><small>AED</small><b>{price}</b></div><p class="unit">per month, per company</p><ul>{f}</ul></article>"""
+    faq = "".join(f"<details><summary>{e(q)}</summary><p>{e(a)}</p></details>" for q, a in PRICE_FAQ)
+    steps = """<div class="steps s4">
+  <div class="step glass"><div class="step-dot">1</div><h3>Discovery call</h3><div class="dur">Free · 30 minutes</div><p>We find the task that costs your team the most time and what a solution would bring.</p></div>
+  <div class="step glass"><div class="step-dot">2</div><h3>Free pilot</h3><div class="dur">AED 0 · no obligation</div><p>A working pilot for one use case. You test it with your own examples and ask for as many changes as you need.</p></div>
+  <div class="step glass"><div class="step-dot">3</div><h3>Build</h3><div class="dur">Fixed price · only after your OK</div><p>Once you are convinced, we build the full solution at the agreed fixed price and connect your systems.</p></div>
+  <div class="step glass"><div class="step-dot">4</div><h3>Operate</h3><div class="dur">From AED 1,100 / month</div><p>Hosting, monitoring, updates and improvements for a fixed monthly fee per company.</p></div>
+</div>"""
+    body = hero + promise + f"""
+<section class="block" id="prices" style="padding-top:0"><div class="wrap">
+  <div class="sec-head"><h2>Typical prices per service</h2><p>Starting prices below the usual UAE market rate, for the full solution after your free pilot. One-time and fixed, with no per-user fees.</p></div>
+  <div class="price-grid">{cards}</div>
+  <div class="price-extras">
+    <div class="glass"><b>Large platforms and AI software</b><span>Several modules, custom AI agents or multi-site rollouts: <strong>from AED 135,000</strong>.</span></div>
+    <div class="glass"><b>Government and free zone procurement</b><span>Quotes for tenders and supplier registrations: <strong>on request</strong>.</span></div>
+  </div>
+</div></section>
+
+<section class="block" style="padding-top:0"><div class="wrap">
+  <div class="sec-head"><h2>We keep it running after launch</h2><p>Operations plans per company, not per user. Extra hours cost AED 270, or AED 2,490 for a 10-hour pack. AI model usage is billed at cost.</p></div>
+  <div class="plan-grid">{plans}</div>
+  <p class="note" style="text-align:center;margin-top:22px">All prices in AED, excluding 5 % UAE VAT. Payment: 50 % on order, 50 % on acceptance.</p>
+</div></section>
+
+<section class="block" style="padding-top:0"><div class="wrap">
+  <div class="sec-head"><h2>Test first, then decide</h2><p>You see working software before you spend anything.</p></div>{steps}
+</div></section>
+
+<section class="block" style="padding-top:0"><div class="wrap two">
+  <h2>Questions about pricing</h2>
+  <div class="faq glass">{faq}</div>
+</div></section>
+{cta_band(r, "Start with a free pilot", "Tell us about your process. We reply within one business day and propose a pilot you can test at no cost.")}"""
+    ld = [crumb_ld([("Home", ""), ("Pricing", "pricing.html")]),
+          {"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [
+              {"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in PRICE_FAQ]}]
+    return page(r, "pricing.html", "Pricing: AI Agents, Automation & Custom Software",
+                "Free pilot project and unlimited revisions. Typical UAE prices for AI agents, workflow automation, dashboards, web and mobile apps, in AED excl. VAT.",
+                "pricing", body, ld)
+
 def contact():
     r = ""
     body = f"""<section class="block" style="padding-top:64px"><div class="wrap">{crumbs(r, [("Home", "index.html"), ("Contact", None)])}{contact_block("h1")}</div></section>"""
@@ -693,7 +792,7 @@ def main():
         else:
             shutil.copy(f, OUT / "assets" / f.name)
     pages = {"index.html": home(), "contact.html": contact(), "services/index.html": services_hub(), "use-cases/index.html": uc_hub(),
-             "privacy.html": privacy(), "legal-notice.html": legal(), "thanks.html": thanks(), "404.html": not_found()}
+             "pricing.html": pricing(), "privacy.html": privacy(), "legal-notice.html": legal(), "thanks.html": thanks(), "404.html": not_found()}
     for s in SERVICES:
         pages[f"services/{s['slug']}.html"] = service_page(s)
     for u in USE_CASES:
